@@ -4,7 +4,9 @@ Definition of urls for app.
 
 from django.urls import path, include
 from django.contrib import admin
+from django.views.generic import TemplateView as DjangoTemplateView
 from app.views import TemplateView
+from app.static_views import StaticHTMLView, StaticPartialView, StaticConstantView
 from .api import *
 import app.constants.url_constants as URLConstants
 from app.constants import app_constants
@@ -14,6 +16,48 @@ from app.api import AnalyzePaper
 from app.defined_api.audio_transcribe import Transcribe
 
 MainView = TemplateView()
+
+# Create static HTML view instances
+class LoginStaticView(StaticHTMLView):
+    html_file = 'login.html'
+
+class HomeStaticView(StaticHTMLView):
+    html_file = 'home.html'
+
+class DatasetsStaticView(StaticHTMLView):
+    html_file = 'datasets.html'
+
+class LibraryStaticView(StaticHTMLView):
+    html_file = 'library.html'
+
+class CredibilityStaticView(StaticHTMLView):
+    html_file = 'credibility.html'
+
+class ComplaintsStaticView(StaticHTMLView):
+    html_file = 'complaints.html'
+
+class HeyStaticView(StaticHTMLView):
+    html_file = 'hey.html'
+
+# Partial views
+class NavbarPartialView(StaticPartialView):
+    html_file = 'navbar.html'
+
+class SidebarPartialView(StaticPartialView):
+    html_file = 'sidebar.html'
+
+class FooterPartialView(StaticPartialView):
+    html_file = 'footer.html'
+
+# Constant views  
+class ErrorConstantView(StaticConstantView):
+    html_file = 'error.html'
+
+class ExpiredConstantView(StaticConstantView):
+    html_file = 'expired.html'
+
+class ComplaintTableConstantView(StaticConstantView):
+    html_file = 'complaint_table.html'
 
 list_create_patterns = URLConstants.GenericAPI.list_create_patterns
 get_update_destroy_patterns = URLConstants.GenericAPI.retrieve_update_delete_patterns
@@ -26,21 +70,39 @@ api_patterns = [
 predefined_patterns = [path("api/analyze-paper/<str:id>/", AnalyzePaper.as_view()),
                        path("api/transcribe-audio/", Transcribe.as_view(), name = "transcribe-audio")]
 
-template_patterns = [
-    path("", MainView.login, name="login"),
-    path("home/", MainView.home, name="home"),
-    path("datasets/", MainView.datasets, name="datasets"),
-    path("library/", MainView.library, name="library"),
-    path("credibility/", MainView.credibility, name="credibility"),
-    path("admin/", admin.site.urls),
-    path("logout/", MainView.user_logout, name="logout"),
-    path("login/", MainView.login, name="login"),
+# Authentication patterns
+auth_patterns = [
     path("authenticate_user/", MainView.authenticate_user, name="authenticate_user"),
-    path("complaints/", MainView.complaints, name="complaints")
+    path("logout/", MainView.user_logout, name="logout"),
+]
+
+# Static HTML patterns (for pure static HTML files)
+static_html_patterns = [
+    path("login.html", LoginStaticView.as_view(), name="login"),
+    path("home.html", HomeStaticView.as_view(), name="home"),
+    path("datasets.html", DatasetsStaticView.as_view(), name="datasets"),
+    path("library.html", LibraryStaticView.as_view(), name="library"),
+    path("credibility.html", CredibilityStaticView.as_view(), name="credibility"),
+    path("complaints.html", ComplaintsStaticView.as_view(), name="complaints"),
+    path("hey.html", HeyStaticView.as_view(), name="hey"),
+    # Partials
+    path("static/partials/navbar.html", NavbarPartialView.as_view(), name="partial_navbar"),
+    path("static/partials/sidebar.html", SidebarPartialView.as_view(), name="partial_sidebar"),
+    path("static/partials/footer.html", FooterPartialView.as_view(), name="partial_footer"),
+    # Constants
+    path("static/constants/error.html", ErrorConstantView.as_view(), name="constant_error"),
+    path("static/constants/expired.html", ExpiredConstantView.as_view(), name="constant_expired"),
+    path("static/constants/complaint_table.html", ComplaintTableConstantView.as_view(), name="constant_complaint_table"),
 ]
 
 urlpatterns = (
-    template_patterns
+    auth_patterns
+    + static_html_patterns
     + api_patterns + predefined_patterns
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 )
+
+# Serve static files during development
+if settings.DEBUG:
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+    urlpatterns += staticfiles_urlpatterns()

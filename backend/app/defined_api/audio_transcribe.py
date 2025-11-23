@@ -1,7 +1,10 @@
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TRANSFORMERS_NO_TF'] = '1'
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from transformers import pipeline
-import os
 import tempfile
 import logging
 import traceback

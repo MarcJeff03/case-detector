@@ -57,9 +57,21 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 """
-CORS settings for Vercel frontend
+CORS settings for Vercel frontend and localhost
 """
-CORS_ALLOWED_ORIGINS = [origin for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "https://case-detector.vercel.app").split(",") if origin]
+CORS_ALLOWED_ORIGINS = [origin for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "https://case-detector.vercel.app,http://localhost:8000,http://127.0.0.1:8000").split(",") if origin]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 ROOT_URLCONF = 'app.urls'
 
@@ -70,7 +82,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(BASE_DIR, '..', 'frontend', 'public'),
+            os.path.join(BASE_DIR, '..', 'frontend', 'public'),      # Static HTML files
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -80,6 +92,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'debug': DEBUG,  # Disable template caching in debug mode
         },
     },
 ]
@@ -125,6 +138,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 STATIC_URL = '/static/'
 STATIC_ROOT = posixpath.join(*(BASE_DIR.split(os.path.sep) + ['static']))
+
+# Additional locations of static files for development
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, '..', 'frontend', 'static'),   # Static assets (CSS, JS, images)
+    os.path.join(BASE_DIR, '..', 'frontend', 'public'),   # Static HTML files
+]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"

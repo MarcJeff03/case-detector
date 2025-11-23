@@ -14,6 +14,7 @@ RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /
         libtesseract-dev \
         libleptonica-dev \
         portaudio19-dev \
+        ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

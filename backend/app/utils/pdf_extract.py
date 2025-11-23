@@ -1,4 +1,8 @@
 # This file marks the utils directory as a Python package.
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TRANSFORMERS_NO_TF'] = '1'
+
 from PyPDF2 import PdfReader
 from pdf2image import convert_from_path
 import pytesseract
@@ -18,6 +22,7 @@ from fpdf import FPDF
 from django.core.files.base import ContentFile
 from io import BytesIO
 from datetime import datetime
+from django.utils.crypto import get_random_string
 
 # Initialize NLTK components
 # nltk.download('punkt')
@@ -50,12 +55,26 @@ def create_pdf_from_text(text, filename="generated.pdf"):
 	# Set font: Arial, regular, 12pt
 	pdf.set_font("Arial", "", 12)
 
+	# Clean text to handle special Unicode characters
+	# Replace common Unicode characters that aren't in Latin-1
+	text = text.replace('\u2019', "'")  # Right single quotation mark
+	text = text.replace('\u2018', "'")  # Left single quotation mark
+	text = text.replace('\u201c', '"')  # Left double quotation mark
+	text = text.replace('\u201d', '"')  # Right double quotation mark
+	text = text.replace('\u2013', '-')  # En dash
+	text = text.replace('\u2014', '-')  # Em dash
+	text = text.replace('\u2026', '...')  # Horizontal ellipsis
+	
+	# Remove any remaining characters that can't be encoded in Latin-1
+	text = text.encode('latin-1', errors='ignore').decode('latin-1')
+
 	# The multi_cell method will automatically handle new pages
 	pdf.multi_cell(w=0, h=10, txt=text, border=1, align='L')
 
-	# Auto-generate filename with current timestamp
+	# Auto-generate filename with timestamp and random code like Django's file upload
 	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-	filename = f"generated_{timestamp}.pdf"
+	random_code = get_random_string(7)
+	filename = f"generated_{timestamp}_{random_code}.pdf"
 	final_file_name = "media/reviewed_papers/" + filename
 	pdf.output(final_file_name)
 

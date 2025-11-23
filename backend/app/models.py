@@ -59,15 +59,29 @@ class Credibility(models.Model):
         except Exception as e:
             print(e)
         self_instance = Credibility.objects.get(id=int(self.pk))
-        self_instance.person = Person.objects.get(id=self_instance.complaint_id)
+        
+        # Only assign person if complaint_id is valid
+        if self_instance.complaint_id:
+            try:
+                self_instance.person = Person.objects.get(id=self_instance.complaint_id)
+            except Person.DoesNotExist:
+                print(f"Warning: Person with id {self_instance.complaint_id} does not exist")
+                self_instance.person = None
 
         if self_instance.is_pdf:
             pdf_path = self_instance.file_location.path
             text = BERT.extract_text_from_pdf(pdf_path)
 
-            Credibility.objects.filter(pk=self_instance.pk).update(
-                person=Person.objects.get(id=self_instance.complaint_id)
-            )
+            # Only update person if we have a valid complaint_id
+            update_data = {}
+            if self_instance.complaint_id:
+                try:
+                    update_data['person'] = Person.objects.get(id=self_instance.complaint_id)
+                except Person.DoesNotExist:
+                    print(f"Warning: Person with id {self_instance.complaint_id} does not exist")
+            
+            if update_data:
+                Credibility.objects.filter(pk=self_instance.pk).update(**update_data)
 
         else:
             # generate pdf and immediately open it when saving

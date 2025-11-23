@@ -77,12 +77,12 @@ class TemplateView:
                 user = authenticate(request, username=username, password=password)
                 if user is not None:
                     login(request, user)  # Library level not instance.
-                    return redirect("index")  # Change the home to your index page.
+                    return redirect("home")  # Redirect to static HTML home page
 
         except Exception as e:
             pass
 
-        return redirect("login")
+        return redirect("login")  # Redirect to static HTML login page
 
     def user_logout(self, request):
         from django.contrib.auth import logout

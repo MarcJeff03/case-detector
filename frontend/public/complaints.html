@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaints-Page - NLP Case Detector</title>
+    <link rel="icon" href="/static/app/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/app/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app/user-defined/css/customized.css">
+    <link rel="stylesheet" href="/static/app/fa/css/all.css">
+    <link rel="stylesheet" href="/static/app/datatables/datatables.min.css">
+    <script src="/static/app/scripts/global.js"></script>
+    <script src="/static/app/scripts/axios.min.js"></script>
+    <script src="/static/app/scripts/vue.min.js"></script>
+    <script src="/static/app/bootstrap/js/bootstrap.js"></script>
+    <script src="/static/app/jquery/jquery-3.6.0.min.js"></script>
+    <script src="/static/app/datatables/datatables.min.js"></script>
+    <script>
+        if (typeof axios !== 'undefined') {
+            axios.defaults.baseURL = window.location.origin;
+        }
+    </script>
+</head>
+<body style="padding-top: 56px;">
+    <div id="navbar-container"></div>
+    <div id="sidebar-container"></div>
+    <div class="container mt-4">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div id="complaints-page" class="modern-complaints-page">
+    <!-- Modern Modal -->
+    <div class="modal fade" id="upload-research" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modern-modal">
+                <div class="modal-header modern-modal-header">
+                    <div class="modal-title-wrapper">
+                        <div class="modal-icon">
+                            <i class="fa-solid fa-file-circle-plus"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title" id="modalLabel">Submit a Complaint</h5>
+                            <p class="modal-subtitle">Submit a complaint for review</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body modern-modal-body">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Person Modal -->
+    <div class="modal fade" id="edit-person-modal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modern-modal">
+                <div class="modal-header modern-modal-header">
+                    <div class="modal-title-wrapper">
+                        <div class="modal-icon">
+                            <i class="fa-solid fa-user-edit"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title" id="editModalLabel">Edit Person</h5>
+                            <p class="modal-subtitle">Update person information</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body modern-modal-body">
+                    <div class="form-group mb-3">
+                        <label class="modern-label">
+                            <i class="fa-solid fa-user"></i>
+                            <span>First Name <span class="required">*</span></span>
+                        </label>
+                        <input class="modern-input" type="text" v-model="state.EDIT_PERSON.first_name" placeholder="Enter first name">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="modern-label">
+                            <i class="fa-solid fa-user"></i>
+                            <span>Middle Name</span>
+                        </label>
+                        <input class="modern-input" type="text" v-model="state.EDIT_PERSON.middle_name" placeholder="Enter middle name (optional)">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="modern-label">
+                            <i class="fa-solid fa-user"></i>
+                            <span>Surname <span class="required">*</span></span>
+                        </label>
+                        <input class="modern-input" type="text" v-model="state.EDIT_PERSON.last_name" placeholder="Enter surname">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="modern-label">
+                            <i class="fa-solid fa-phone"></i>
+                            <span>Contact Number <span class="required">*</span></span>
+                        </label>
+                        <input 
+                            class="modern-input" 
+                            type="text" 
+                            v-model="state.EDIT_PERSON.contact_number" 
+                            placeholder="09XXXXXXXXX (11 digits)"
+                            maxlength="11"
+                            @input="validateContactNumber($event, 'EDIT_PERSON')">
+                        <span v-if="editContactError" class="error-message">
+                            <i class="fa-solid fa-exclamation-circle"></i>
+                            [[ editContactError ]]
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="modern-label">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>Address <span class="required">*</span></span>
+                        </label>
+                        <input class="modern-input" type="text" v-model="state.EDIT_PERSON.address" placeholder="Enter complete address">
+                    </div>
+                </div>
+                <div class="modal-footer modern-modal-footer">
+                    <button type="button" class="modern-btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-times"></i>
+                        <span>Cancel</span>
+                    </button>
+                    <button type="button" class="modern-btn btn-primary" @click="updatePerson()">
+                        <i class="fa-solid fa-save"></i>
+                        <span>Save Changes</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fa-solid fa-clipboard-list"></i>
+            </div>
+            <div class="header-text">
+                <h2 class="page-title">Manage Complaints</h2>
+                <p class="page-subtitle">Add and manage complaint profiles for case tracking</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="complaints-form-card">
+        <div class="form-card-header">
+            <div class="card-header-content">
+                <div class="card-header-icon">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div>
+                    <h5 class="card-header-title">Add New Complaint</h5>
+                    <p class="card-header-subtitle">Fill in the details to create a new complaint profile</p>
+                </div>
+            </div>
+        </div>
+        <div class="form-card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="modern-label">
+                        <i class="fa-solid fa-user"></i>
+                        <span>First Name <span class="required">*</span></span>
+                    </label>
+                    <input class="modern-input" type="text" v-model="state.PERSON.first_name" placeholder="Enter first name">
+                </div>
+
+                <div class="form-group">
+                    <label class="modern-label">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Middle Name</span>
+                    </label>
+                    <input class="modern-input" type="text" v-model="state.PERSON.middle_name" placeholder="Enter middle name (optional)">
+                </div>
+
+                <div class="form-group">
+                    <label class="modern-label">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Surname <span class="required">*</span></span>
+                    </label>
+                    <input class="modern-input" type="text" v-model="state.PERSON.last_name" placeholder="Enter surname">
+                </div>
+
+                <div class="form-group">
+                    <label class="modern-label">
+                        <i class="fa-solid fa-phone"></i>
+                        <span>Contact Number <span class="required">*</span></span>
+                    </label>
+                    <input 
+                        class="modern-input" 
+                        type="text" 
+                        v-model="state.PERSON.contact_number" 
+                        placeholder="09XXXXXXXXX (11 digits)"
+                        maxlength="11"
+                        @input="validateContactNumber($event, 'PERSON')">
+                    <span v-if="contactError" class="error-message">
+                        <i class="fa-solid fa-exclamation-circle"></i>
+                        [[ contactError ]]
+                    </span>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="modern-label">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>Address <span class="required">*</span></span>
+                    </label>
+                    <input class="modern-input" type="text" v-model="state.PERSON.address" placeholder="Enter complete address">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="action-btn btn-primary" @click="addProfile()">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Person</span>
+                </button>
+                <button class="action-btn btn-secondary" @click="clearFilters()">
+                    <i class="fa-solid fa-eraser"></i>
+                    <span>Clear Form</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="complaints-table-card">
+        <div class="table-card-header">
+            <div class="card-header-content">
+                <div class="card-header-icon">
+                    <i class="fa-solid fa-table-list"></i>
+                </div>
+                <div>
+                    <h5 class="card-header-title">Complaint Records</h5>
+                    <p class="card-header-subtitle">View and manage all registered complaints</p>
+                </div>
+            </div>
+        </div>
+        <div class="table-card-body">
+            <!-- Search Bar -->
+            <div class="search-bar-container">
+                <div class="search-bar">
+                    <i class="fa-solid fa-search search-icon"></i>
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        placeholder="Search by name, contact, or address..."
+                        id="complaints-search"
+                    >
+                    <button class="search-clear" id="clear-search" style="display: none;">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Records Counter -->
+            <div class="mobile-records-info">
+                <i class="fa-solid fa-users"></i>
+                <span>Showing [[ displayPersons.length ]] of [[ persons.length ]] records</span>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="modern-table" id="complaints-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <div class="th-content">
+                                    <i class="fa-solid fa-hashtag"></i>
+                                    <span>ID</span>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-content">
+                                    <i class="fa-solid fa-user"></i>
+                                    <span>First Name</span>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-content">
+                                    <i class="fa-solid fa-user"></i>
+                                    <span>Middle Name</span>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-content">
+                                    <i class="fa-solid fa-user"></i>
+                                    <span>Last Name</span>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-content">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    <span>Address</span>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-content">
+                                    <i class="fa-solid fa-phone"></i>
+                                    <span>Contact</span>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="th-content">
+                                    <i class="fa-solid fa-cog"></i>
+                                    <span>Actions</span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(person, index) in filteredPersons" :key="person.id">
+                            <td data-label="ID">
+                                <span class="id-badge">[[ index + 1 ]]</span>
+                            </td>
+                            <td data-label="First Name">
+                                <div class="cell-content">
+                                    <i class="fa-solid fa-user-circle person-icon"></i>
+                                    <span>[[ person.first_name ]]</span>
+                                </div>
+                            </td>
+                            <td data-label="Middle Name">
+                                <div class="cell-content">
+                                    [[ person.middle_name || 'N/A' ]]
+                                </div>
+                            </td>
+                            <td data-label="Last Name">
+                                <div class="cell-content font-weight-bold">
+                                    [[ person.last_name ]]
+                                </div>
+                            </td>
+                            <td data-label="Address">
+                                <div class="cell-content address-text">
+                                    <i class="fa-solid fa-map-marker-alt"></i>
+                                    <span>[[ person.address ]]</span>
+                                </div>
+                            </td>
+                            <td data-label="Contact">
+                                <div class="cell-content contact-text">
+                                    <i class="fa-solid fa-mobile-alt"></i>
+                                    <span>[[ person.contact_number ]]</span>
+                                </div>
+                            </td>
+                            <td data-label="Actions">
+                                <div class="action-buttons">
+                                    <button class="action-btn btn-select" @click="selectPerson(person)">
+                                        <i class="fa-solid fa-check"></i>
+                                        <span>Select</span>
+                                    </button>
+                                    <button v-if="showEditDelete" class="action-btn btn-edit" @click="editPerson(person)" data-bs-toggle="modal" data-bs-target="#edit-person-modal" title="Edit">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    <button v-if="showEditDelete" class="action-btn btn-delete" @click="deletePerson(person)" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Complaints Page */
+.modern-complaints-page {
+    padding: 2rem 1.5rem;
+    min-height: calc(100vh - 120px);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    position: relative;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.modern-complaints-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(74, 144, 226, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(91, 127, 191, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: 2rem;
+    animation: fadeInDown 0.7s ease-out;
+    position: relative;
+    z-index: 1;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.75rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    box-shadow: 
+        0 4px 20px rgba(74, 144, 226, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(74, 144, 226, 0.12);
+    transition: all 0.4s ease;
+}
+
+.header-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 30px rgba(74, 144, 226, 0.12),
+        0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.header-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 8px 24px rgba(74, 144, 226, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    animation: pulse 3s ease-in-out infinite;
+}
+
+.header-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.header-icon i {
+    font-size: 1.85rem;
+    color: white;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+    position: relative;
+    z-index: 1;
+}
+
+.page-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 0.35rem 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+}
+
+.page-subtitle {
+    font-size: 0.975rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* Form Card */
+.complaints-form-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    box-shadow: 
+        0 4px 20px rgba(74, 144, 226, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(74, 144, 226, 0.12);
+    overflow: hidden;
+    animation: fadeInUp 0.7s ease-out 0.2s both;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 2rem;
+}
+
+.form-card-header, .table-card-header {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.06) 0%, rgba(91, 127, 191, 0.04) 100%);
+    padding: 1.75rem;
+    border-bottom: 2px solid rgba(74, 144, 226, 0.1);
+    position: relative;
+}
+
+.form-card-header::after, .table-card-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(74, 144, 226, 0.3) 50%, 
+        transparent 100%);
+}
+
+.card-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+}
+
+.card-header-icon {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 6px 18px rgba(74, 144, 226, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.card-header-icon:hover {
+    transform: rotate(-5deg) scale(1.05);
+}
+
+.card-header-icon i {
+    font-size: 1.45rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.card-header-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.3rem 0;
+    letter-spacing: -0.3px;
+}
+
+.card-header-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.form-card-body, .table-card-body {
+    padding: 2rem;
+}
+
+.table-card-body {
+    overflow-x: auto;
+    padding: 0;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.modern-label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.925rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.6rem;
+}
+
+.modern-label i {
+    color: #4A90E2;
+    font-size: 1rem;
+}
+
+.required {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.modern-input {
+    width: 100%;
+    padding: 0.875rem 1.15rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.925rem;
+    color: #1e293b;
+    background: white;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.modern-input:focus {
+    outline: none;
+    border-color: #4A90E2;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.08);
+}
+
+.modern-input::placeholder {
+    color: #94a3b8;
+}
+
+/* Error Message */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    font-weight: 500;
+}
+
+.error-message i {
+    font-size: 0.85rem;
+}
+
+.modern-input.error {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.modern-input.error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 1.65rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.925rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease;
+}
+
+.action-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.action-btn span,
+.action-btn i {
+    position: relative;
+    z-index: 1;
+}
+
+.action-btn.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+}
+
+.action-btn.btn-secondary {
+    background: #64748b;
+    color: white;
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.25);
+}
+
+.action-btn.btn-secondary:hover {
+    background: #475569;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(100, 116, 139, 0.35);
+}
+
+/* Table Card */
+.complaints-table-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    box-shadow: 
+        0 4px 20px rgba(74, 144, 226, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(74, 144, 226, 0.12);
+    overflow: hidden;
+    animation: fadeInUp 0.7s ease-out 0.4s both;
+    position: relative;
+    z-index: 1;
+}
+
+/* Search Bar Container */
+.search-bar-container {
+    margin-bottom: 1.75rem;
+    animation: fadeInUp 0.7s ease-out 0.5s both;
+}
+
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    margin-bottom: 1rem;
+}
+
+.search-bar:focus-within {
+    border-color: #4A90E2;
+    box-shadow: 
+        0 0 0 4px rgba(74, 144, 226, 0.08),
+        0 4px 12px rgba(74, 144, 226, 0.15);
+    transform: translateY(-2px);
+}
+
+.search-icon {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin-right: 0.875rem;
+    transition: color 0.3s ease;
+}
+
+.search-bar:focus-within .search-icon {
+    color: #4A90E2;
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.95rem;
+    color: #1e293b;
+    padding: 0.25rem 0;
+    font-weight: 500;
+}
+
+.search-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.search-clear {
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #64748b;
+}
+
+.search-clear:hover {
+    background: #ef4444;
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* Mobile Records Info */
+.mobile-records-info {
+    display: none;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #0369a1;
+    font-weight: 600;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 6px rgba(3, 105, 161, 0.1);
+}
+
+.mobile-records-info i {
+    font-size: 0.95rem;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+    padding: 0.875rem;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* Hide DataTable default search */
+.dataTables_filter {
+    display: none !important;
+}
+
+/* Modern Modal */
+.modern-modal {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modern-modal-header {
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    padding: 1.75rem;
+    border-bottom: none;
+    position: relative;
+}
+
+.modern-modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.3;
+}
+
+.modal-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+    position: relative;
+    z-index: 1;
+}
+
+.modal-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modal-icon i {
+    font-size: 1.35rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.modal-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.modal-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.modern-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.modern-close:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+.modern-modal-body {
+    padding: 1.75rem;
+    background: #fafbfc;
+}
+
+.modern-modal-footer {
+    padding: 1.25rem 1.75rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 0.85rem;
+    justify-content: flex-end;
+}
+
+.modern-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 1.65rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.925rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease;
+}
+
+.modern-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.modern-btn span,
+.modern-btn i {
+    position: relative;
+    z-index: 1;
+}
+
+.modern-btn.btn-secondary {
+    background: #64748b;
+    color: white;
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.25);
+}
+
+.modern-btn.btn-secondary:hover {
+    background: #475569;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(100, 116, 139, 0.35);
+}
+
+.modern-btn.btn-primary {
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(74, 144, 226, 0.3);
+}
+
+.modern-btn.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+    .modern-complaints-page {
+        padding: 1.5rem 1rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .header-icon {
+        width: 55px;
+        height: 55px;
+    }
+
+    .header-icon i {
+        font-size: 1.5rem;
+    }
+
+    .form-grid {
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .modern-complaints-page {
+        padding: 1.25rem 0.875rem;
+    }
+
+    .header-content {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .header-icon i {
+        font-size: 1.35rem;
+    }
+
+    .page-title {
+        font-size: 1.35rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .form-card-header, .table-card-header {
+        padding: 1.25rem;
+    }
+
+    .form-card-body, .table-card-body {
+        padding: 1.5rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modern-complaints-page {
+        padding: 1rem 0.75rem;
+    }
+
+    .header-content {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-icon {
+        width: 45px;
+        height: 45px;
+    }
+
+    .header-icon i {
+        font-size: 1.25rem;
+    }
+
+    .page-title {
+        font-size: 1.2rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .form-card-header, .table-card-header {
+        padding: 1rem;
+    }
+
+    .card-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .form-card-body, .table-card-body {
+        padding: 1rem;
+    }
+
+    .modern-input {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .action-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.875rem;
+    }
+
+    /* Show mobile records info */
+    .mobile-records-info {
+        display: flex;
+    }
+
+    .search-bar {
+        padding: 0.625rem 1rem;
+    }
+
+    .search-input {
+        font-size: 0.875rem;
+    }
+
+    .search-clear {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* Modern Table Styles */
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+}
+
+.modern-table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.modern-table thead th:nth-child(1) { width: 60px; } /* ID */
+.modern-table thead th:nth-child(2) { width: 150px; } /* First Name */
+.modern-table thead th:nth-child(3) { width: 150px; } /* Middle Name */
+.modern-table thead th:nth-child(4) { width: 150px; } /* Last Name */
+.modern-table thead th:nth-child(5) { width: 250px; } /* Address */
+.modern-table thead th:nth-child(6) { width: 150px; } /* Contact */
+.modern-table thead th:nth-child(7) { width: 250px; } /* Actions */
+
+.modern-table thead {
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    position: relative;
+}
+
+.modern-table thead::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.2) 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        rgba(255, 255, 255, 0.2) 100%);
+}
+
+.modern-table thead th {
+    padding: 1.15rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+    border: none;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.3px;
+}
+
+.th-content {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.th-content i {
+    font-size: 1rem;
+    opacity: 0.95;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+.modern-table tbody tr {
+    border-bottom: 1px solid #e8eef5;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.modern-table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.04) 0%, rgba(91, 127, 191, 0.03) 100%);
+    transform: translateX(4px);
+    box-shadow: -4px 0 0 rgba(74, 144, 226, 0.3);
+}
+
+.modern-table tbody td {
+    padding: 1.15rem 1rem;
+    color: #475569;
+    font-size: 0.925rem;
+    vertical-align: middle;
+}
+
+.cell-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 300px;
+    word-break: break-word;
+    line-height: 1.6;
+}
+
+.id-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    color: white;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
+}
+
+.person-icon {
+    color: #4A90E2;
+    font-size: 1.2rem;
+}
+
+.font-weight-bold {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.address-text, .contact-text {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.address-text i, .contact-text i {
+    color: #4A90E2;
+    font-size: 0.9rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.15rem;
+    border: none;
+    border-radius: 24px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+/* Icon-only buttons (Edit and Delete) in table only */
+.action-buttons .btn-edit,
+.action-buttons .btn-delete {
+    padding: 0.55rem;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.action-buttons .btn-edit i,
+.action-buttons .btn-delete i {
+    margin: 0;
+}
+
+.btn-select {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
+}
+
+.btn-select:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(139, 92, 246, 0.35);
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(74, 144, 226, 0.25);
+}
+
+.btn-edit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(74, 144, 226, 0.35);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+}
+
+.btn-delete:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+}
+
+.btn-delete:disabled,
+.btn-edit:disabled,
+.btn-select:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Hide DataTables default search */
+.dataTables_filter {
+    display: none !important;
+}
+
+/* Mobile responsive for table */
+@media (max-width: 575.98px) {
+    /* Show mobile records info */
+    .mobile-records-info {
+        display: flex;
+    }
+
+    .table-wrapper {
+        padding: 0.35rem;
+    }
+
+    /* Hide DataTables info on mobile */
+    .dataTables_info,
+    .dataTables_paginate {
+        display: none !important;
+    }
+
+    /* Stack table for mobile */
+    .modern-table,
+    .modern-table thead,
+    .modern-table tbody,
+    .modern-table tr,
+    .modern-table td {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .modern-table thead {
+        display: none !important;
+    }
+
+    .modern-table tbody tr {
+        margin-bottom: 1.25rem;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background: white;
+        border: 1px solid #e2e8f0;
+    }
+
+    .modern-table tbody td {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1rem;
+        text-align: right !important;
+        border-bottom: 1px solid #f1f5f9;
+        position: relative;
+        padding-left: 1rem !important;
+        min-height: 3.5rem;
+    }
+
+    .modern-table tbody td:before {
+        content: attr(data-label);
+        position: relative;
+        left: 0;
+        top: 0;
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        flex-shrink: 0;
+        margin-right: 1rem;
+    }
+
+    .modern-table tbody td:last-child {
+        border-bottom: none;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+
+    .cell-content {
+        max-width: 100%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: #334155;
+    }
+
+    .id-badge {
+        width: 36px;
+        height: 36px;
+        font-size: 0.85rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+        border-radius: 8px;
+    }
+}
+</style>
+
+<script>
+
+new Vue({
+    delimiters: ["[[", "]]"],
+    el: "#" + 'complaints-page',
+    data: {
+
+        state: {
+            
+            PERSON: {
+                "first_name": "",
+                "middle_name": "",
+                "last_name": "",
+                "contact_number": "",
+                "address": ""
+            },
+
+            EDIT_PERSON: {
+                "id": null,
+                "first_name": "",
+                "middle_name": "",
+                "last_name": "",
+                "contact_number": "",
+                "address": ""
+            },
+
+            SELECTED_PERSON: {}
+        },
+        
+        persons: [],
+        filteredPersons: [],
+        searchQuery: '',
+        dataTable: null,
+        showEditDelete: true,
+        contactError: '',
+        editContactError: ''
+    },
+    computed: {
+        displayPersons() {
+            return this.filteredPersons;
+        }
+    },
+    mounted() {
+      
+        if (document.querySelector("#" + 'complaints-page')) {
+            console.log("Mounted " + 'complaints-page' + " page.")
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('complaints-search');
+        const clearBtn = document.getElementById('clear-search');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchQuery = e.target.value.toLowerCase();
+                this.filterPersons();
+                clearBtn.style.display = e.target.value ? 'flex' : 'none';
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                this.searchQuery = '';
+                clearBtn.style.display = 'none';
+                this.filterPersons();
+            });
+        }
+
+        this.getProfile()
+
+    },
+    methods: {
+
+        validateContactNumber(event, personType) {
+            const value = event.target.value;
+            const errorField = personType === 'PERSON' ? 'contactError' : 'editContactError';
+            
+            // Remove non-numeric characters
+            const numericValue = value.replace(/\D/g, '');
+            this.state[personType].contact_number = numericValue;
+            
+            // Validate
+            if (numericValue.length === 0) {
+                this[errorField] = '';
+                event.target.classList.remove('error');
+            } else if (!numericValue.startsWith('09')) {
+                this[errorField] = 'Contact number must start with 09';
+                event.target.classList.add('error');
+            } else if (numericValue.length < 11) {
+                this[errorField] = `Contact number must be 11 digits (${numericValue.length}/11)`;
+                event.target.classList.add('error');
+            } else if (numericValue.length === 11) {
+                this[errorField] = '';
+                event.target.classList.remove('error');
+            }
+        },
+
+        filterPersons() {
+            let filtered = this.persons;
+
+            // Apply search query
+            if (this.searchQuery) {
+                const query = this.searchQuery.toLowerCase();
+                filtered = filtered.filter(person => {
+                    const firstName = (person.first_name || '').toLowerCase();
+                    const middleName = (person.middle_name || '').toLowerCase();
+                    const lastName = (person.last_name || '').toLowerCase();
+                    const contact = (person.contact_number || '').toLowerCase();
+                    const address = (person.address || '').toLowerCase();
+                    
+                    return firstName.includes(query) || 
+                           middleName.includes(query) || 
+                           lastName.includes(query) || 
+                           contact.includes(query) || 
+                           address.includes(query);
+                });
+            }
+
+            this.filteredPersons = filtered;
+
+            // Destroy and recreate DataTable to reflect filtered data
+            if (this.dataTable) {
+                this.dataTable.destroy();
+                this.dataTable = null;
+            }
+            
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    this.initDataTable();
+                }, 50);
+            });
+        },
+
+        initDataTable() {   
+            if (this.dataTable) {
+                this.dataTable.destroy();
+                this.dataTable = null;
+            }
+            
+            setTimeout(() => {
+                this.dataTable = $('#complaints-table').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    searching: false,
+                    language: {
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    }
+                });
+            }, 100);
+        },
+
+        selectPerson(person) {
+            this.state.SELECTED_PERSON = person
+        },
+
+        editPerson(person) {
+            this.state.EDIT_PERSON = {
+                id: person.id,
+                first_name: person.first_name,
+                middle_name: person.middle_name,
+                last_name: person.last_name,
+                contact_number: person.contact_number,
+                address: person.address
+            };
+        },
+
+        async updatePerson() {
+            // Validate contact number before submitting
+            if (!this.state.EDIT_PERSON.contact_number) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Contact number is required',
+                    icon: 'warning',
+                    confirmButtonColor: '#4A90E2'
+                });
+                return;
+            }
+            
+            if (!this.state.EDIT_PERSON.contact_number.startsWith('09')) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Contact number must start with 09',
+                    icon: 'warning',
+                    confirmButtonColor: '#4A90E2'
+                });
+                return;
+            }
+            
+            if (this.state.EDIT_PERSON.contact_number.length !== 11) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Contact number must be exactly 11 digits',
+                    icon: 'warning',
+                    confirmButtonColor: '#4A90E2'
+                });
+                return;
+            }
+            
+            try {
+                const csrftoken = getCookie("csrftoken");
+                axios.defaults.headers.common["X-CSRFToken"] = csrftoken;
+                const url = `/api/get-update-destroy/person/${this.state.EDIT_PERSON.id}/`;
+                
+                const payload = {
+                    first_name: this.state.EDIT_PERSON.first_name,
+                    middle_name: this.state.EDIT_PERSON.middle_name,
+                    last_name: this.state.EDIT_PERSON.last_name,
+                    contact_number: this.state.EDIT_PERSON.contact_number,
+                    address: this.state.EDIT_PERSON.address
+                };
+                
+                await axios.patch(url, payload);
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('edit-person-modal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Refresh the list - fetch fresh data
+                await this.getProfile();
+                
+                Swal.fire({
+                    title: 'Updated!',
+                    text: 'Person updated successfully!',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                console.log('Person updated successfully');
+            } catch (error) {
+                console.error('Error updating person:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to update person. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#4A90E2'
+                });
+            }
+        },
+
+        clearFilters() {
+          this.state.PERSON = { "first_name": "", "middle_name": "", "last_name": "", "contact_number": "", "address": "" }
+          this.contactError = ''
+        },
+
+        async deletePerson(person) {
+            const result = await Swal.fire({
+                title: 'Delete Person?',
+                text: `Are you sure you want to delete ${person.first_name} ${person.last_name}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            try {
+                const csrftoken = getCookie("csrftoken");
+                axios.defaults.headers.common["X-CSRFToken"] = csrftoken;
+                const url = `/api/get-update-destroy/person/${person.id}/`;
+                await axios.delete(url);
+                
+                // Refresh the list - fetch fresh data
+                await this.getProfile();
+                
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Person has been deleted successfully.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                console.log('Person deleted successfully');
+            } catch (error) {
+                console.error('Error deleting person:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to delete person. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#4A90E2'
+                });
+            }
+        },
+
+        async addProfile() {
+            // Validate contact number before submitting
+            if (!this.state.PERSON.contact_number) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Contact number is required',
+                    icon: 'warning',
+                    confirmButtonColor: '#4A90E2'
+                });
+                return;
+            }
+            
+            if (!this.state.PERSON.contact_number.startsWith('09')) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Contact number must start with 09',
+                    icon: 'warning',
+                    confirmButtonColor: '#4A90E2'
+                });
+                return;
+            }
+            
+            if (this.state.PERSON.contact_number.length !== 11) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Contact number must be exactly 11 digits',
+                    icon: 'warning',
+                    confirmButtonColor: '#4A90E2'
+                });
+                return;
+            }
+            
+            const csrftoken = getCookie("csrftoken");
+            axios.defaults.headers.common["X-CSRFToken"] = csrftoken;
+            const url = '/api/list-create/person/'
+            
+            try {
+                const result = await axios.post(url, this.state.PERSON)
+
+                if (result) {
+                    this.clearFilters()
+                    // Refresh the list - fetch fresh data
+                    await this.getProfile()
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Person added successfully!',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            } catch (error) {
+                console.error('Error adding person:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to add person. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#4A90E2'
+                });
+            }
+
+        },
+        async getProfile() {
+            try {
+                const csrftoken = getCookie("csrftoken");
+                axios.defaults.headers.common["X-CSRFToken"] = csrftoken;
+                const url = '/api/list-create/person/'
+                const result = await axios.get(url)
+                
+                if (result) {
+                    // Destroy existing DataTable first
+                    if (this.dataTable) {
+                        this.dataTable.destroy();
+                        this.dataTable = null;
+                    }
+                    
+                    // Update data
+                    this.persons = result.data
+                    this.filteredPersons = result.data
+                    
+                    // Reinitialize DataTable after data is updated
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            this.initDataTable();
+                        }, 100);
+                    });
+                    
+                    console.log('Profile data refreshed:', result.data.length, 'records');
+                }
+            } catch (error) {
+                console.error('Error fetching profile data:', error);
+            }
+        },
+
+    },
+});
+</script>
+
+    </div>
+    <script src="/static/app/bootstrap/js/bootstrap.bundle.js"></script>
+    <script>
+        async function loadPartial(url, containerId) {
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const html = await response.text();
+                    document.getElementById(containerId).innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading ' + url + ':', error);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPartial('/static/partials/navbar.html', 'navbar-container');
+            loadPartial('/static/partials/sidebar.html', 'sidebar-container');
+        });
+    </script>
+</body>
+</html>
