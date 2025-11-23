@@ -19,16 +19,8 @@
     <script src="/static/app/jquery/jquery-3.6.0.min.js"></script>
     <script src="/static/app/datatables/datatables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/config.js"></script>
     
-    <!-- API Configuration -->
-    <script>
-        // Configure axios to use backend URL
-        if (typeof axios !== 'undefined') {
-            axios.defaults.baseURL = window.location.origin; // Use same origin for localhost
-            // For production: axios.defaults.baseURL = 'https://case-detector.onrender.com';
-            console.log('Axios configured with base URL:', axios.defaults.baseURL);
-        }
-    </script>
 </head>
 
 <body style="padding-top: 56px;">

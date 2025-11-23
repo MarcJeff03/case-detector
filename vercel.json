@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/frontend/public/static/$1"
+    },
+    {
+      "src": "/config.js",
+      "dest": "/frontend/public/config.js"
+    },
+    {
+      "src": "/(.*)\\.html",
+      "dest": "/frontend/public/$1.html"
+    },
+    {
+      "src": "/",
+      "dest": "/frontend/public/login.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://case-detector.onrender.com"
+        },
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Authorization, X-CSRFToken"
+        }
+      ]
+    }
+  ]
+}

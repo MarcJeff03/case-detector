@@ -25,9 +25,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ.get("SECRET_KEY", "cb480bd8-7abf-4e5c-ae8e-1bf07b298900")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,case-detector.onrender.com,case-detector.vercel.app").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,case-detector.onrender.com,.onrender.com").split(",")
 
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
@@ -61,6 +61,7 @@ CORS settings for Vercel frontend and localhost
 """
 CORS_ALLOWED_ORIGINS = [origin for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "https://case-detector.vercel.app,http://localhost:8000,http://127.0.0.1:8000").split(",") if origin]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False  # Only allow specific origins
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -72,6 +73,20 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# CSRF Settings for cross-origin
+CSRF_TRUSTED_ORIGINS = [
+    'https://case-detector.vercel.app',
+    'https://case-detector.onrender.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Session settings for cross-origin
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True  # Required for SameSite=None
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True  # Required for SameSite=None
 
 ROOT_URLCONF = 'app.urls'
 

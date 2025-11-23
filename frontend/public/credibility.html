@@ -15,10 +15,9 @@
     <script src="/static/app/bootstrap/js/bootstrap.js"></script>
     <script src="/static/app/jquery/jquery-3.6.0.min.js"></script>
     <script src="/static/app/datatables/datatables.min.js"></script>
+    <script src="/config.js"></script>
     <script>
-        if (typeof axios !== 'undefined') {
-            axios.defaults.baseURL = window.location.origin;
-        }
+        // API_BASE_URL is now loaded from config.js
     </script>
 </head>
 <body style="padding-top: 56px;">

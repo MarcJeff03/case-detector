@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/static/app/fa/css/all.css">
     <script src="/static/app/bootstrap/js/bootstrap.js"></script>
     <script src="/static/app/jquery/jquery-3.6.0.min.js"></script>
+    <script src="/config.js"></script>
 </head>
 
 <body>
@@ -608,9 +609,7 @@
 </style>
 
 <script>
-// Configuration - Change this to your Django backend URL
-const API_BASE_URL = window.location.origin; // Use same origin for localhost
-// For production: const API_BASE_URL = 'https://case-detector.onrender.com';
+// API_BASE_URL is now loaded from config.js
 
 // Function to get CSRF token from cookies
 function getCookie(name) {
