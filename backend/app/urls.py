@@ -102,14 +102,23 @@ static_html_patterns = [
     path("static/constants/complaint_table.html", ComplaintTableConstantView.as_view(), name="constant_complaint_table"),
 ]
 
-urlpatterns = (
-    auth_patterns
-    + static_html_patterns
-    + api_patterns + predefined_patterns
-    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-)
+urlpatterns = [
+    *auth_patterns,
+    *static_html_patterns,
+    *api_patterns,
+    *predefined_patterns,
+]
+
+# Serve media files (works in both development and production)
+# In production, consider using cloud storage (S3, Cloudinary) for better performance
+from django.views.static import serve as static_serve
+from django.urls import re_path
+
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', static_serve, {'document_root': settings.MEDIA_ROOT}),
+]
 
 # Serve static files during development
-if settings.DEBUG or True:  # Always serve static files in local development
+if settings.DEBUG:
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
     urlpatterns += staticfiles_urlpatterns()
