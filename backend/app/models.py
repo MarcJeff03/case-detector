@@ -3,7 +3,8 @@ Definition of models.
 """
 
 from django.db import models
-import app.utils.pdf_extract as BERT
+# Lazy import - only load when needed to save memory
+# import app.utils.pdf_extract as BERT
 from app.constants import app_constants
 from app.ra_keywords import RA_KEYWORDS, STOP_WORDS
 import json
@@ -69,6 +70,9 @@ class Credibility(models.Model):
                 self_instance.person = None
 
         if self_instance.is_pdf:
+            # Lazy import to save memory on startup
+            import app.utils.pdf_extract as BERT
+            
             pdf_path = self_instance.file_location.path
             text = BERT.extract_text_from_pdf(pdf_path)
 
@@ -84,6 +88,9 @@ class Credibility(models.Model):
                 Credibility.objects.filter(pk=self_instance.pk).update(**update_data)
 
         else:
+            # Lazy import to save memory on startup
+            import app.utils.pdf_extract as BERT
+            
             # generate pdf and immediately open it when saving
             final_path = BERT.create_pdf_from_text(self_instance.non_pdf_text)
             print(self_instance.person)
@@ -106,6 +113,9 @@ class Credibility(models.Model):
         
     def get_paper_contents(self, text_contents: str) -> None:
         """Do a select query and join all so no CPU intensive will be done."""
+
+        # Lazy import to save memory on startup
+        import app.utils.pdf_extract as BERT
 
         # Use imported RA_KEYWORDS from ra_keywords.py
 
@@ -245,6 +255,8 @@ class Credibility(models.Model):
         """
         if self.is_pdf and self.file_location:
             try:
+                # Lazy import to save memory on startup
+                import app.utils.pdf_extract as BERT
                 # Try to extract text from the PDF file
                 return BERT.extract_text_from_pdf(self.file_location.path)
             except Exception as e:

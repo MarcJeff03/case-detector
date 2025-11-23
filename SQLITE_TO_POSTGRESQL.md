@@ -40,7 +40,7 @@ $env:DATABASE_URL="paste-your-postgresql-url-here"
 **Windows CMD:**
 ```cmd
 cd backend
-set DATABASE_URL=paste-your-postgresql-url-here
+set DATABASE_URL=postgresql://case_detector_user:A1ynj069x7zcsM1bEH8PhT2Hw23heQtB@dpg-d4hhlb2dbo4c73bfrol0-a/case_detector
 ```
 
 **Linux/Mac:**

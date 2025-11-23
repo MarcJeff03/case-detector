@@ -26,12 +26,16 @@ RUN pip install -r requirements.txt
 COPY . /app
 
 ENV DJANGO_SETTINGS_MODULE=app.settings
+# Disable TensorFlow warnings and reduce logging
+ENV TF_CPP_MIN_LOG_LEVEL=3
+ENV TRANSFORMERS_VERBOSITY=error
 RUN python manage.py collectstatic --noinput || true
 
 EXPOSE 8000
 
 # Auto-run migrations and create default user on startup
+# Using --preload to load app once, and --timeout 120 for slow startup
 CMD python manage.py migrate --noinput && \
     python manage.py createdefaultuser && \
-    gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 1
+    gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 2 --timeout 120 --preload --max-requests 1000 --max-requests-jitter 50
     
