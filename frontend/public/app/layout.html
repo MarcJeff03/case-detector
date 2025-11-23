@@ -22,6 +22,15 @@
     <script src="{% static 'app/jquery/jquery-3.6.0.min.js' %}"></script>
     <script src="{% static 'app/datatables/datatables.min.js' %}"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- API Configuration for Vercel deployment -->
+    <script>
+        // Configure axios to use Render backend URL
+        if (typeof axios !== 'undefined') {
+            axios.defaults.baseURL = 'https://case-detector.onrender.com';
+            console.log('Axios configured with base URL: https://case-detector.onrender.com');
+        }
+    </script>
 
     </head>
 
