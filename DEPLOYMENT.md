@@ -16,8 +16,33 @@ The backend is already configured in `backend/` folder with:
 - Django REST Framework
 - CORS enabled for Vercel domain
 - Session/CSRF cookies configured for cross-origin
+- **Dockerfile** ready for containerized deployment
 
-### 2. Deploy to Render
+### 2. Deploy to Render (Choose Option A or B)
+
+#### Option A: Docker Deployment (Recommended ✅)
+
+Docker provides consistent environments and includes all dependencies (FFmpeg, Tesseract, etc.).
+
+1. Go to [Render Dashboard](https://dashboard.render.com/)
+2. Click **New +** → **Web Service**
+3. Connect your GitHub repository
+4. Configure:
+   - **Name**: `case-detector`
+   - **Root Directory**: `backend`
+   - **Environment**: **Docker**
+   - **Dockerfile Path**: `backend/Dockerfile`
+   - **Docker Build Context Directory**: `backend`
+   - **Instance Type**: Free or Starter
+
+Render will automatically:
+- Build the Docker image from your Dockerfile
+- Install all system dependencies (FFmpeg, Tesseract, Poppler)
+- Run `gunicorn` on port 8000
+
+#### Option B: Native Python Deployment
+
+Without Docker (requires manual dependency setup):
 
 1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. Click **New +** → **Web Service**
@@ -27,8 +52,10 @@ The backend is already configured in `backend/` folder with:
    - **Root Directory**: `backend`
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app.wsgi:application`
+   - **Start Command**: `gunicorn app.wsgi:application --bind 0.0.0.0:8000`
    - **Instance Type**: Free or Starter
+
+⚠️ **Note**: Audio transcription won't work without FFmpeg. You'll need to add build commands to install system dependencies.
 
 ### 3. Set Environment Variables in Render
 
@@ -48,6 +75,33 @@ After deployment, run in Render shell:
 ```bash
 python manage.py migrate
 python manage.py createsuperuser
+```
+
+### 5. Why Use Docker? 🐳
+
+**Advantages:**
+- ✅ **Consistent environment**: Same setup locally and in production
+- ✅ **All dependencies included**: FFmpeg, Tesseract, Poppler automatically installed
+- ✅ **Faster debugging**: If it works locally, it works in production
+- ✅ **Easy rollback**: Version control for entire environment
+- ✅ **Isolation**: No conflicts with system packages
+
+**What's in the Dockerfile:**
+```dockerfile
+FROM python:3.8.5-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg              # For audio transcription
+    tesseract-ocr       # For OCR text extraction
+    poppler-utils       # For PDF processing
+    
+# Install Python dependencies
+COPY requirements.txt /app/
+RUN pip install -r requirements.txt
+
+# Run gunicorn
+CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"]
 ```
 
 ## Frontend Deployment (Vercel)
@@ -203,6 +257,47 @@ const API_BASE_URL = (hostname === 'case-detector.vercel.app')
 ## Local Development
 
 ### Backend (Django)
+
+#### Option A: Using Docker (Recommended)
+```bash
+cd backend
+
+# Build the Docker image
+docker build -t case-detector-backend .
+
+# Run the container
+docker run -p 8000:8000 \
+  -e DEBUG=True \
+  -e ALLOWED_HOSTS=localhost,127.0.0.1 \
+  -v $(pwd)/db.sqlite3:/app/db.sqlite3 \
+  -v $(pwd)/media:/app/media \
+  case-detector-backend
+
+# Or use docker-compose (easier!)
+cd ..  # Go to project root
+docker-compose up
+```
+
+**Using docker-compose.yml** (included in project):
+```bash
+# Start both backend and frontend
+docker-compose up
+
+# Or run in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
+
+# Stop services
+docker-compose down
+```
+
+Access:
+- Backend: http://localhost:8000
+- Frontend: http://localhost:8080/login.html
+
+#### Option B: Native Python
 ```bash
 cd backend
 python -m venv venv
@@ -210,6 +305,8 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py runserver
 ```
+
+⚠️ **Note**: Audio transcription requires FFmpeg installed on your system.
 
 ### Frontend (Static Files)
 ```bash
@@ -230,6 +327,21 @@ Or open `frontend/public/login.html` directly in browser (Django backend must be
 - [ ] Secure cookies: `SameSite=None; Secure`
 - [ ] Database backups configured on Render
 - [ ] Media files stored in persistent storage (Render Disk or S3)
+
+## Docker vs Native Python
+
+| Feature | Docker 🐳 | Native Python 🐍 |
+|---------|----------|------------------|
+| Setup complexity | Low (one command) | Medium (manual deps) |
+| System dependencies | ✅ Included (FFmpeg, Tesseract) | ❌ Manual install |
+| Consistency | ✅ Same everywhere | ⚠️ OS-dependent |
+| Audio transcription | ✅ Works out of box | ❌ Requires FFmpeg |
+| PDF processing | ✅ Works out of box | ❌ Requires Poppler |
+| Deployment | ✅ Click & deploy | ⚠️ Build commands needed |
+| Performance | Good | Slightly better |
+| Best for | Production, Teams | Solo dev, Simple projects |
+
+**Recommendation**: Use Docker for Render deployment to ensure all features work (especially audio transcription and PDF processing).
 
 ## Monitoring
 
