@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>NLP Case Detector</title>
+
+        {% load static %}
+    <link rel="icon" href="{% static 'app/favicon.ico' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="{% static 'app/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'app/user-defined/css/customized.css' %}">
+    <link rel="stylesheet" href="{% static 'app/fa/css/all.css' %}">
+    <link rel="stylesheet" href="{% static 'app/datatables/datatables.min.css' %}">
+
+    <script src="{% static 'app/scripts/global.js' %}"></script>
+    <script src="{% static 'app/scripts/axios.min.js' %}"></script>
+    <script src="{% static 'app/scripts/vue.min.js' %}"></script>
+
+    <script src="{% static 'app/bootstrap/js/bootstrap.js' %}"></script>
+    <script src="{% static 'app/jquery/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'app/datatables/datatables.min.js' %}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    </head>
+
+    <body style="padding-top: 56px;">
+
+        {% if user.is_authenticated %}
+
+            {% include 'app/partials/navbar.html' %}
+            
+        {% endif %}
+
+        <div class="container mt-4">
+
+            {% block content %}
+
+            {% endblock %}
+
+
+        <footer class="modern-footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                    <div class="footer-brand-text">
+                        <span class="footer-title">Case Detector</span>
+                        <span class="footer-subtitle">BERT NLP System</span>
+                    </div>
+                </div>
+                <div class="footer-divider"></div>
+                <div class="footer-info">
+                    <p class="footer-copyright">
+                        <i class="fa-regular fa-copyright"></i> 2025 Case Detector. All rights reserved.
+                    </p>
+                    <p class="footer-credits">
+                        Developed <i class="fa-solid fa-heart footer-heart"></i> by <strong>Gabasa</strong>
+                    </p>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">
+                        <i class="fa-solid fa-shield-halved"></i> Privacy
+                    </a>
+                    <a href="#" class="footer-link">
+                        <i class="fa-solid fa-file-contract"></i> Terms
+                    </a>
+                    <a href="#" class="footer-link">
+                        <i class="fa-solid fa-circle-info"></i> About
+                    </a>
+                </div>
+            </div>
+        </footer>
+
+        </div>
+
+        {% block scripts %}
+
+        {% endblock %}
+
+    <script src="{% static 'app/bootstrap/js/bootstrap.bundle.js' %}"></script>
+
+        <style>
+        /* Modern Footer Styles */
+        .modern-footer {
+            margin-top: 4rem;
+            padding: 2.5rem 0 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-top: 1px solid rgba(74, 144, 226, 0.15);
+            position: relative;
+        }
+
+        .modern-footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #4A90E2 25%, 
+                #5B7FBF 50%, 
+                #4A90E2 75%, 
+                transparent 100%
+            );
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Footer Brand */
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .footer-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
+        }
+
+        .footer-logo i {
+            font-size: 1.5rem;
+            color: white;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .footer-brand-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .footer-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+
+        .footer-subtitle {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* Footer Divider */
+        .footer-divider {
+            width: 100%;
+            max-width: 400px;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(74, 144, 226, 0.3) 50%, 
+                transparent 100%
+            );
+        }
+
+        /* Footer Info */
+        .footer-info {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .footer-copyright {
+            font-size: 0.9rem;
+            color: #475569;
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .footer-copyright i {
+            color: #4A90E2;
+            font-size: 0.95rem;
+        }
+
+        .footer-credits {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+        }
+
+        .footer-credits strong {
+            color: #4A90E2;
+            font-weight: 700;
+        }
+
+        .footer-heart {
+            color: #ef4444;
+            font-size: 0.8rem;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% {
+                transform: scale(1);
+            }
+            10%, 30% {
+                transform: scale(1.1);
+            }
+            20%, 40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Footer Links */
+        .footer-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .footer-link i {
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: #4A90E2;
+            background: rgba(74, 144, 226, 0.08);
+            border-color: rgba(74, 144, 226, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .footer-link:hover i {
+            transform: scale(1.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 767.98px) {
+            .modern-footer {
+                margin-top: 3rem;
+                padding: 2rem 0 1.25rem;
+            }
+
+            .footer-content {
+                gap: 1.25rem;
+            }
+
+            .footer-brand {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.75rem;
+            }
+
+            .footer-logo {
+                width: 45px;
+                height: 45px;
+            }
+
+            .footer-logo i {
+                font-size: 1.35rem;
+            }
+
+            .footer-title {
+                font-size: 1.15rem;
+            }
+
+            .footer-subtitle {
+                font-size: 0.7rem;
+            }
+
+            .footer-brand-text {
+                align-items: center;
+            }
+
+            .footer-divider {
+                max-width: 250px;
+            }
+
+            .footer-copyright {
+                font-size: 0.85rem;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .footer-credits {
+                font-size: 0.8rem;
+            }
+
+            .footer-links {
+                gap: 1rem;
+            }
+
+            .footer-link {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.6rem;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .modern-footer {
+                margin-top: 2.5rem;
+                padding: 1.75rem 0 1rem;
+            }
+
+            .footer-content {
+                gap: 1rem;
+            }
+
+            .footer-logo {
+                width: 42px;
+                height: 42px;
+            }
+
+            .footer-logo i {
+                font-size: 1.25rem;
+            }
+
+            .footer-title {
+                font-size: 1.1rem;
+            }
+
+            .footer-subtitle {
+                font-size: 0.68rem;
+            }
+
+            .footer-copyright {
+                font-size: 0.8rem;
+            }
+
+            .footer-credits {
+                font-size: 0.75rem;
+            }
+
+            .footer-links {
+                gap: 0.75rem;
+                flex-direction: column;
+            }
+
+            .footer-link {
+                font-size: 0.75rem;
+                padding: 0.35rem 0.5rem;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .modern-footer {
+                margin-top: 2rem;
+                padding: 1rem 0;
+                border-top: 1px solid #ccc;
+            }
+
+            .footer-links,
+            .footer-divider {
+                display: none;
+            }
+        }
+        </style>
+
+    </body>
+
+</html>
