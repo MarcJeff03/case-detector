@@ -5,35 +5,16 @@ Run this script locally before deploying to Render
 
 import os
 import sys
-import django
 
-# Setup Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-django.setup()
-
-from django.core.management import call_command
-from django.db import connection
-
-def transfer_data():
-    """
-    Transfer data from SQLite to PostgreSQL
-    
-    Instructions:
-    1. Make sure you have your SQLite database (db.sqlite3) in the backend folder
-    2. Set DATABASE_URL environment variable to your PostgreSQL connection string
-    3. Run this script: python transfer_data.py
-    """
-    
+def main():
     print("=" * 60)
     print("SQLite to PostgreSQL Data Transfer")
     print("=" * 60)
     
-    # Check current database
-    db_engine = connection.settings_dict['ENGINE']
-    print(f"\n✓ Current database engine: {db_engine}")
+    # Check for DATABASE_URL
+    postgres_url = os.environ.get('DATABASE_URL', '')
     
-    if 'postgresql' not in db_engine and 'psycopg' not in db_engine:
+    if not postgres_url or 'postgresql' not in postgres_url:
         print("\n❌ ERROR: DATABASE_URL is not set to PostgreSQL!")
         print("\nPlease set DATABASE_URL environment variable:")
         print("   Windows PowerShell:")
@@ -41,38 +22,53 @@ def transfer_data():
         print("\n   Then run this script again.")
         sys.exit(1)
     
+    print(f"\n✓ PostgreSQL URL configured")
+    
+    # Step 1: Export from SQLite
     print("\n" + "=" * 60)
     print("Step 1: Exporting data from SQLite")
     print("=" * 60)
     
-    # Export data to JSON
-    print("\nExporting all data to JSON fixture...")
-    call_command('dumpdata', 
-                 '--natural-foreign', 
-                 '--natural-primary',
-                 '--exclude=contenttypes',
-                 '--exclude=auth.permission',
-                 '--indent=2',
-                 '--output=data_backup.json')
+    print("\nRemoving DATABASE_URL temporarily to use SQLite...")
+    del os.environ['DATABASE_URL']
+    
+    print("Running dumpdata command...")
+    exit_code = os.system('python manage.py dumpdata --natural-foreign --natural-primary --exclude=contenttypes --exclude=auth.permission --indent=2 --output=data_backup.json')
+    
+    if exit_code != 0:
+        print("\n❌ ERROR: Failed to export data from SQLite")
+        sys.exit(1)
     
     print("✓ Data exported to: data_backup.json")
     
+    # Step 2: Import to PostgreSQL
     print("\n" + "=" * 60)
     print("Step 2: Setting up PostgreSQL database")
     print("=" * 60)
     
-    # Run migrations on PostgreSQL
-    print("\nRunning migrations on PostgreSQL...")
-    call_command('migrate', '--noinput')
+    print("\nRestoring DATABASE_URL for PostgreSQL...")
+    os.environ['DATABASE_URL'] = postgres_url
+    
+    print("Running migrations on PostgreSQL...")
+    exit_code = os.system('python manage.py migrate --noinput')
+    
+    if exit_code != 0:
+        print("\n❌ ERROR: Failed to run migrations")
+        sys.exit(1)
+    
     print("✓ PostgreSQL schema created")
     
     print("\n" + "=" * 60)
     print("Step 3: Importing data to PostgreSQL")
     print("=" * 60)
     
-    # Load data into PostgreSQL
     print("\nImporting data from JSON...")
-    call_command('loaddata', 'data_backup.json')
+    exit_code = os.system('python manage.py loaddata data_backup.json')
+    
+    if exit_code != 0:
+        print("\n❌ ERROR: Failed to import data")
+        sys.exit(1)
+    
     print("✓ Data imported to PostgreSQL")
     
     print("\n" + "=" * 60)
@@ -87,11 +83,15 @@ def transfer_data():
 
 if __name__ == '__main__':
     try:
-        transfer_data()
+        main()
+    except KeyboardInterrupt:
+        print("\n\n❌ Transfer cancelled by user")
+        sys.exit(1)
     except Exception as e:
         print(f"\n❌ ERROR: {str(e)}")
-        print("\nIf you see 'cannot import name' errors, make sure:")
+        print("\nMake sure:")
         print("1. You're in the backend folder")
-        print("2. DATABASE_URL is set correctly")
-        print("3. PostgreSQL is accessible")
+        print("2. db.sqlite3 exists")
+        print("3. DATABASE_URL is set correctly")
+        print("4. PostgreSQL is accessible")
         sys.exit(1)
