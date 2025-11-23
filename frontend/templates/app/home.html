@@ -1,0 +1,1491 @@
+{% extends "app/layout.html" %}
+{% load static %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<div id="{{ obj_name }}" class="modern-dashboard">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="header-text">
+                <h2 class="dashboard-title">Dashboard Reports</h2>
+                <p class="dashboard-subtitle">Check evaluation metrics based on training.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <!-- Source Card -->
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-inner">
+                <div class="stat-icon-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h5 class="stat-label">Source(s)</h5>
+                    <div class="stat-value" v-if="!isLoading">[[ stats.research ]]</div>
+                    <div class="stat-value" v-else><i class="fa-solid fa-spinner fa-spin"></i></div>
+                    <p class="stat-description">Count of case source(s) submitted.</p>
+                </div>
+                <div class="stat-decoration"></div>
+            </div>
+        </div>
+
+        <!-- Sentences Card -->
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-inner">
+                <div class="stat-icon-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h5 class="stat-label">Total Sentence(s)</h5>
+                    <div class="stat-value" v-if="!isLoading">[[ stats.datasets ]]</div>
+                    <div class="stat-value" v-else><i class="fa-solid fa-spinner fa-spin"></i></div>
+                    <p class="stat-description">Total sentences found in the database.</p>
+                </div>
+                <div class="stat-decoration"></div>
+            </div>
+        </div>
+
+        <!-- Checked Papers Card -->
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-inner">
+                <div class="stat-icon-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h5 class="stat-label">Checked Paper(s)</h5>
+                    <div class="stat-value" v-if="!isLoading">[[ stats.credibility ]]</div>
+                    <div class="stat-value" v-else><i class="fa-solid fa-spinner fa-spin"></i></div>
+                    <p class="stat-description">Submitted papers in the database that are reviewed.</p>
+                </div>
+                <div class="stat-decoration"></div>
+            </div>
+        </div>
+
+        <!-- Case Detected Card -->
+        <div class="stat-card stat-card-warning">
+            <div class="stat-card-inner">
+                <div class="stat-icon-wrapper">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-shield-exclamation"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h5 class="stat-label">Case Detected</h5>
+                    <div class="stat-value" v-if="!isLoading">[[ stats.plagiarism ]]</div>
+                    <div class="stat-value" v-else><i class="fa-solid fa-spinner fa-spin"></i></div>
+                    <p class="stat-description">Case detected from reports.</p>
+                </div>
+                <div class="stat-decoration"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="analytics-section">
+        <div class="section-header">
+            <div class="section-header-icon">
+                <i class="fa-solid fa-chart-bar"></i>
+            </div>
+            <div class="section-header-text">
+                <h3 class="section-title">RA Law Analytics</h3>
+                <p class="section-subtitle">Analysis of matched RA laws with high probability rates</p>
+            </div>
+        </div>
+
+        <!-- Filter Toggle -->
+        <div class="filter-toggle">
+            <button 
+                class="filter-btn" 
+                :class="{ active: timeFilter === 'monthly' }"
+                @click="timeFilter = 'monthly'; updateCharts()">
+                <i class="fa-solid fa-calendar-day"></i>
+                <span>This Month</span>
+            </button>
+            <button 
+                class="filter-btn" 
+                :class="{ active: timeFilter === 'yearly' }"
+                @click="timeFilter = 'yearly'; updateCharts()">
+                <i class="fa-solid fa-calendar-year"></i>
+                <span>This Year</span>
+            </button>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- RA Law Distribution Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-wrapper">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <h4 class="chart-title">RA Law Match Distribution</h4>
+                    </div>
+                    <span class="chart-period">[[ timeFilterLabel ]]</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="raLawChart"></canvas>
+                </div>
+                <div class="chart-footer" v-if="!isLoadingCharts">
+                    <span class="chart-info">
+                        <i class="fa-solid fa-info-circle"></i>
+                        Total RA Laws Analyzed: [[ totalRALaws ]]
+                    </span>
+                </div>
+            </div>
+
+            <!-- High Probability Matches Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-wrapper">
+                        <i class="fa-solid fa-percentage"></i>
+                        <h4 class="chart-title">High Probability Matches (≥70%)</h4>
+                    </div>
+                    <span class="chart-period">[[ timeFilterLabel ]]</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="highProbChart"></canvas>
+                </div>
+                <div class="chart-footer" v-if="!isLoadingCharts">
+                    <span class="chart-info">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                        High Match Cases: [[ highMatchCount ]]
+                    </span>
+                </div>
+            </div>      
+
+            <!-- Monthly/Yearly Trend Chart -->
+            <div class="chart-card chart-card-wide">
+                <div class="chart-header">
+                    <div class="chart-title-wrapper">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <h4 class="chart-title">RA Law Analysis Trend</h4>
+                    </div>
+                    <span class="chart-period">[[ timeFilterLabel ]]</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="trendChart"></canvas>
+                </div>
+                <div class="chart-footer" v-if="!isLoadingCharts">
+                    <span class="chart-info">
+                        <i class="fa-solid fa-chart-area"></i>
+                        Showing analysis trends over time
+                    </span>
+                </div>
+            </div>
+
+            <!-- Complainants Chart -->
+            <div class="chart-card chart-card-wide">
+                <div class="chart-header">
+                    <div class="chart-title-wrapper">
+                        <i class="fa-solid fa-users"></i>
+                        <h4 class="chart-title">Complainants Activity</h4>
+                    </div>
+                    <span class="chart-period">[[ timeFilterLabel ]]</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="complainantsChart"></canvas>
+                </div>
+                <div class="chart-footer" v-if="!isLoadingCharts">
+                    <span class="chart-info">
+                        <i class="fa-solid fa-user-group"></i>
+                        Total Complainants: [[ totalComplainants ]]
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Dashboard Container */
+.modern-dashboard {
+    padding: 2rem 1.5rem;
+    min-height: calc(100vh - 120px);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Dashboard Header */
+.dashboard-header {
+    margin-bottom: 2rem;
+    animation: fadeInDown 0.6s ease-out;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+}
+
+.header-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
+    flex-shrink: 0;
+}
+
+.header-icon i {
+    font-size: 1.75rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.header-text {
+    flex: 1;
+}
+
+.dashboard-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+}
+
+.dashboard-subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+/* Stat Card */
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    position: relative;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card-inner {
+    padding: 1.75rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* Stat Icon */
+.stat-icon-wrapper {
+    margin-bottom: 1.25rem;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.stat-icon i {
+    font-size: 1.75rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.stat-card:hover .stat-icon i {
+    transform: scale(1.1);
+}
+
+/* Stat Content */
+.stat-content {
+    position: relative;
+    z-index: 2;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 0.75rem 0;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-size: 2.75rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.stat-description {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+/* Stat Decoration */
+.stat-decoration {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    opacity: 0.08;
+    transition: all 0.4s ease;
+}
+
+.stat-card:hover .stat-decoration {
+    transform: scale(1.2);
+    opacity: 0.12;
+}
+
+/* Card Color Variants */
+.stat-card-primary {
+    border-color: rgba(74, 144, 226, 0.15);
+}
+
+.stat-card-primary .stat-icon {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
+}
+
+.stat-card-primary .stat-label,
+.stat-card-primary .stat-value {
+    color: #4A90E2;
+}
+
+.stat-card-primary .stat-decoration {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+}
+
+.stat-card-primary:hover {
+    border-color: rgba(74, 144, 226, 0.3);
+    box-shadow: 0 12px 32px rgba(74, 144, 226, 0.2);
+}
+
+.stat-card-info {
+    border-color: rgba(91, 127, 191, 0.15);
+}
+
+.stat-card-info .stat-icon {
+    background: linear-gradient(135deg, #5B7FBF 0%, #4A6FA5 100%);
+    box-shadow: 0 8px 20px rgba(91, 127, 191, 0.3);
+}
+
+.stat-card-info .stat-label,
+.stat-card-info .stat-value {
+    color: #5B7FBF;
+}
+
+.stat-card-info .stat-decoration {
+    background: linear-gradient(135deg, #5B7FBF 0%, #4A6FA5 100%);
+}
+
+.stat-card-info:hover {
+    border-color: rgba(91, 127, 191, 0.3);
+    box-shadow: 0 12px 32px rgba(91, 127, 191, 0.2);
+}
+
+.stat-card-success {
+    border-color: rgba(16, 185, 129, 0.15);
+}
+
+.stat-card-success .stat-icon {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-card-success .stat-label,
+.stat-card-success .stat-value {
+    color: #10b981;
+}
+
+.stat-card-success .stat-decoration {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.stat-card-success:hover {
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card-warning {
+    border-color: rgba(245, 158, 11, 0.15);
+}
+
+.stat-card-warning .stat-icon {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-card-warning .stat-label,
+.stat-card-warning .stat-value {
+    color: #f59e0b;
+}
+
+.stat-card-warning .stat-decoration {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stat-card-warning:hover {
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.2);
+}
+
+/* Analytics Section */
+.analytics-section {
+    margin-top: 2.5rem;
+    animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.section-header-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.3);
+    flex-shrink: 0;
+}
+
+.section-header-icon i {
+    font-size: 1.5rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.section-header-text {
+    flex: 1;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+}
+
+.section-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Filter Toggle */
+.filter-toggle {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.filter-btn:hover {
+    border-color: #8b5cf6;
+    color: #8b5cf6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    border-color: #8b5cf6;
+    color: white;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+}
+
+.filter-btn i {
+    font-size: 1rem;
+}
+
+/* Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+/* Chart Card */
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card-wide {
+    grid-column: 1 / -1;
+}
+
+.chart-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(124, 58, 237, 0.03) 100%);
+    border-bottom: 2px solid rgba(139, 92, 246, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chart-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chart-title-wrapper i {
+    font-size: 1.25rem;
+    color: #8b5cf6;
+}
+
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.chart-period {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+}
+
+.chart-body {
+    padding: 1.5rem;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-footer {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e2e8f0;
+}
+
+.chart-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.chart-info i {
+    color: #8b5cf6;
+    font-size: 0.9rem;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1199.98px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-card-wide {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .modern-dashboard {
+        padding: 1.5rem 1rem;
+    }
+
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .header-icon {
+        width: 55px;
+        height: 55px;
+    }
+
+    .header-icon i {
+        font-size: 1.5rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .stat-card-inner {
+        padding: 1.5rem;
+    }
+
+    .stat-icon {
+        width: 55px;
+        height: 55px;
+    }
+
+    .stat-icon i {
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+    }
+
+    .section-title {
+        font-size: 1.35rem;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .modern-dashboard {
+        padding: 1.25rem 0.875rem;
+    }
+
+    .header-content {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .header-icon i {
+        font-size: 1.35rem;
+    }
+
+    .dashboard-title {
+        font-size: 1.35rem;
+    }
+
+    .dashboard-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .stat-card-inner {
+        padding: 1.35rem;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .stat-icon i {
+        font-size: 1.35rem;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+    }
+
+    .stat-value {
+        font-size: 2.25rem;
+    }
+
+    .stat-description {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modern-dashboard {
+        padding: 1rem 0.75rem;
+    }
+
+    .header-content {
+        padding: 1rem;
+        gap: 0.875rem;
+    }
+
+    .header-icon {
+        width: 45px;
+        height: 45px;
+    }
+
+    .header-icon i {
+        font-size: 1.25rem;
+    }
+
+    .dashboard-title {
+        font-size: 1.2rem;
+    }
+
+    .dashboard-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .stat-card-inner {
+        padding: 1.25rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+    }
+
+    .stat-icon i {
+        font-size: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-description {
+        font-size: 0.75rem;
+    }
+
+    .stat-decoration {
+        width: 100px;
+        height: 100px;
+    }
+}
+</style>
+
+<script>
+
+new Vue({
+    delimiters: ["[[", "]]"],
+    el: "#" + '{{ obj_name }}',
+    data: {
+        stats: {
+            research: 0,
+            datasets: 0,
+            credibility: 0,
+            plagiarism: 0
+        },
+        isLoading: true,
+        isLoadingCharts: true,
+        timeFilter: 'monthly',
+        credibilityData: [],
+        raLawChart: null,
+        highProbChart: null,
+        trendChart: null,
+        complainantsChart: null,
+        totalRALaws: 0,
+        highMatchCount: 0,
+        totalComplainants: 0
+    },
+    computed: {
+        timeFilterLabel() {
+            return this.timeFilter === 'monthly' ? 'This Month' : 'This Year';
+        },
+        filteredCredibilityData() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            
+            return this.credibilityData.filter(item => {
+                if (!item.created_at) return false;
+                const itemDate = new Date(item.created_at);
+                
+                if (this.timeFilter === 'monthly') {
+                    return itemDate.getFullYear() === currentYear && 
+                           itemDate.getMonth() === currentMonth;
+                } else {
+                    return itemDate.getFullYear() === currentYear;
+                }
+            });
+        }
+    },
+    mounted() {
+        if (document.querySelector("#" + '{{ obj_name }}')) {
+            console.log("Mounted " + '{{ obj_name }}' + " page.")
+        }
+        this.fetchStats();
+        this.fetchCredibilityData();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            this.fetchStats();
+            this.fetchCredibilityData();
+        }, 30000);
+    },
+    methods: {
+        async fetchStats() {
+            try {
+                // Fetch research count
+                const researchResult = await axios.get("/api/list-create/research/");
+                this.stats.research = researchResult.data.length;
+                
+                // Fetch datasets count
+                const datasetsResult = await axios.get("/api/list-create/datasets/");
+                this.stats.datasets = datasetsResult.data.length;
+                
+                // Fetch credibility count
+                const credibilityResult = await axios.get("/api/list-create/credibility/");
+                this.stats.credibility = credibilityResult.data.length;
+                
+                // Count plagiarized items
+                this.stats.plagiarism = credibilityResult.data.filter(item => item.is_plagirized === true).length;
+                
+                console.log("Stats updated:", this.stats);
+                this.isLoading = false;
+            } catch (error) {
+                console.error("Error fetching stats:", error);
+                this.isLoading = false;
+            }
+        },
+        async fetchCredibilityData() {
+            try {
+                const result = await axios.get("/api/list-create/credibility/");
+                this.credibilityData = result.data;
+                console.log("Credibility data loaded:", this.credibilityData.length, "records");
+                this.isLoadingCharts = false;
+                
+                // Wait for next tick to ensure DOM is ready
+                this.$nextTick(() => {
+                    this.initCharts();
+                });
+            } catch (error) {
+                console.error("Error fetching credibility data:", error);
+                this.isLoadingCharts = false;
+            }
+        },
+        initCharts() {
+            // Destroy existing charts
+            if (this.raLawChart) this.raLawChart.destroy();
+            if (this.highProbChart) this.highProbChart.destroy();
+            if (this.trendChart) this.trendChart.destroy();
+            if (this.complainantsChart) this.complainantsChart.destroy();
+            
+            this.createRALawChart();
+            this.createHighProbChart();
+            this.createTrendChart();
+            this.createComplainantsChart();
+        },
+        updateCharts() {
+            this.$nextTick(() => {
+                this.initCharts();
+            });
+        },
+        extractRANumber(item) {
+            // Priority 1: Extract from remarks field (most accurate)
+            if (item.remarks) {
+                const remarksMatch = item.remarks.match(/RA\s*\d+/i);
+                if (remarksMatch) {
+                    return remarksMatch[0].toUpperCase().replace(/\s+/g, ' ');
+                }
+            }
+            
+            // Priority 2: Extract from title
+            if (item.title) {
+                const titleMatch = item.title.match(/RA\s*\d+/i);
+                if (titleMatch) {
+                    return titleMatch[0].toUpperCase().replace(/\s+/g, ' ');
+                }
+            }
+            
+            // Priority 3: Extract from file_location
+            if (item.file_location) {
+                const fileMatch = item.file_location.match(/RA\s*\d+/i);
+                if (fileMatch) {
+                    return fileMatch[0].toUpperCase().replace(/\s+/g, ' ');
+                }
+            }
+            
+            return 'Unknown RA';
+        },
+        parseMatchLevel(matchLevel) {
+            if (!matchLevel) return 0;
+            // Extract percentage (e.g., "86.0%" -> 86.0)
+            const match = matchLevel.toString().match(/[\d.]+/);
+            return match ? parseFloat(match[0]) : 0;
+        },
+        createRALawChart() {
+            const ctx = document.getElementById('raLawChart');
+            if (!ctx) return;
+            
+            const filtered = this.filteredCredibilityData;
+            const raLawCounts = {};
+            
+            filtered.forEach(item => {
+                const raNum = this.extractRANumber(item);
+                if (raNum !== 'Unknown RA') {
+                    raLawCounts[raNum] = (raLawCounts[raNum] || 0) + 1;
+                }
+            });
+            
+            this.totalRALaws = Object.keys(raLawCounts).length;
+            
+            const sortedLaws = Object.entries(raLawCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10); // Top 10 RA laws
+            
+            const labels = sortedLaws.map(item => item[0]);
+            const data = sortedLaws.map(item => item[1]);
+            
+            this.raLawChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Matches',
+                        data: data,
+                        backgroundColor: 'rgba(74, 144, 226, 0.8)',
+                        borderColor: 'rgba(74, 144, 226, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            borderRadius: 8,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: (context) => {
+                                    return `Cases Analyzed: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        },
+        createHighProbChart() {
+            const ctx = document.getElementById('highProbChart');
+            if (!ctx) return;
+
+            const filtered = this.filteredCredibilityData;
+            const raLawHighMatches = {};
+
+            filtered.forEach(item => {
+                // Try to get match level from multiple possible fields
+                let matchLevel = null;
+                if (item.match_level !== undefined && item.match_level !== null) {
+                    matchLevel = this.parseMatchLevel(item.match_level);
+                } else if (item.plagiarism_level !== undefined && item.plagiarism_level !== null) {
+                    // Sometimes stored as a float 0-100 or 0-1
+                    let val = item.plagiarism_level;
+                    if (typeof val === 'string') {
+                        val = parseFloat(val);
+                    }
+                    // If value is 0-1, convert to percent
+                    if (val <= 1) val = val * 100;
+                    matchLevel = val;
+                }
+                // Debug: log the item and matchLevel
+                // console.log('RA:', this.extractRANumber(item), 'match_level:', item.match_level, 'plagiarism_level:', item.plagiarism_level, 'parsed:', matchLevel);
+                if (matchLevel !== null && matchLevel >= 70) {
+                    const raNum = this.extractRANumber(item);
+                    if (raNum !== 'Unknown RA') {
+                        raLawHighMatches[raNum] = (raLawHighMatches[raNum] || 0) + 1;
+                    }
+                }
+            });
+
+            this.highMatchCount = Object.values(raLawHighMatches).reduce((a, b) => a + b, 0);
+
+            const sortedLaws = Object.entries(raLawHighMatches)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8); // Top 8 RA laws
+
+            const labels = sortedLaws.map(item => item[0]);
+            const data = sortedLaws.map(item => item[1]);
+
+            const colors = [
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(236, 72, 153, 0.8)',
+                'rgba(20, 184, 166, 0.8)',
+                'rgba(251, 146, 60, 0.8)'
+            ];
+
+            this.highProbChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, data.length),
+                        borderColor: '#fff',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 11,
+                                    weight: '600'
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            borderRadius: 8,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: (context) => {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        },
+        createTrendChart() {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+            
+            const filtered = this.filteredCredibilityData;
+            const trendData = {};
+            
+            filtered.forEach(item => {
+                if (!item.created_at) return;
+                const date = new Date(item.created_at);
+                let key;
+
+                if (this.timeFilter === 'monthly') {
+                    // Group by day of month
+                    key = date.getDate();
+                } else {
+                    // Group by month
+                    key = date.toLocaleString('default', { month: 'short' });
+                }
+
+                if (!trendData[key]) {
+                    trendData[key] = {
+                        total: 0,
+                        highMatch: 0
+                    };
+                }
+
+                trendData[key].total++;
+                // Robustly extract match level
+                let matchLevel = null;
+                if (item.match_level !== undefined && item.match_level !== null) {
+                    matchLevel = this.parseMatchLevel(item.match_level);
+                } else if (item.plagiarism_level !== undefined && item.plagiarism_level !== null) {
+                    let val = item.plagiarism_level;
+                    if (typeof val === 'string') {
+                        val = parseFloat(val);
+                    }
+                    if (val <= 1) val = val * 100;
+                    matchLevel = val;
+                }
+                if (matchLevel !== null && matchLevel >= 70) {
+                    trendData[key].highMatch++;
+                }
+            });
+            
+            let labels, totalData, highMatchData;
+            
+            if (this.timeFilter === 'monthly') {
+                // Days 1-31
+                const now = new Date();
+                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+                totalData = labels.map(day => trendData[day]?.total || 0);
+                highMatchData = labels.map(day => trendData[day]?.highMatch || 0);
+            } else {
+                // Months
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                labels = months;
+                totalData = months.map(month => trendData[month]?.total || 0);
+                highMatchData = months.map(month => trendData[month]?.highMatch || 0);
+            }
+            
+            this.trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Analyzed',
+                            data: totalData,
+                            borderColor: 'rgba(74, 144, 226, 1)',
+                            backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: 'rgba(74, 144, 226, 1)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'High Probability (≥70%)',
+                            data: highMatchData,
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    weight: '600'
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            borderRadius: 8,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                maxRotation: 45,
+                                minRotation: 0
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        },
+        createComplainantsChart() {
+            const ctx = document.getElementById('complainantsChart');
+            if (!ctx) return;
+            const filtered = this.filteredCredibilityData;
+            const complainantCounts = {};
+            // Debug: log the first few items to see the structure
+            if (filtered.length > 0) {
+                console.log('Sample credibility data for complainants:', filtered.slice(0, 3));
+            }
+            // Count complaints per complainant (robust extraction)
+            filtered.forEach(item => {
+                let name = '';
+                if (item.person) {
+                    if (typeof item.person === 'string') {
+                        name = item.person.trim();
+                    } else if (typeof item.person === 'object' && item.person !== null) {
+                        if (item.person.name) {
+                            name = item.person.name.trim();
+                        } else if (item.person.full_name) {
+                            name = item.person.full_name.trim();
+                        } else if (item.person.first_name && item.person.last_name) {
+                            name = (item.person.first_name + ' ' + item.person.last_name).trim();
+                        }
+                    }
+                } else if (item.complainant) {
+                    name = item.complainant.trim();
+                }
+                if (name) {
+                    complainantCounts[name] = (complainantCounts[name] || 0) + 1;
+                }
+            });
+            this.totalComplainants = Object.keys(complainantCounts).length;
+            // Sort by complaint count and get top 15
+            const sortedComplainants = Object.entries(complainantCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 15);
+            const labels = sortedComplainants.map(item => item[0]);
+            const data = sortedComplainants.map(item => item[1]);
+            // Generate gradient colors
+            const colors = sortedComplainants.map((_, index) => {
+                const hue = (index * 360 / 15) % 360;
+                return `hsla(${hue}, 70%, 60%, 0.8)`;
+            });
+            this.complainantsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Complaints Filed',
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Horizontal bar chart
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            borderRadius: 8,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: (context) => {
+                                    return `Complaints Filed: ${context.parsed.x}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    weight: '600'
+                                },
+                                autoSkip: false
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    },
+});
+</script>
+{% endblock %}

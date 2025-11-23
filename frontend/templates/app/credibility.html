@@ -1,0 +1,2617 @@
+{% extends "app/layout.html" %}
+{% load static %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div id="{{ obj_name }}" class="modern-credibility-page">
+
+    <div class="row">
+
+        
+
+        <div class="modal fade" id="upload-research" tabindex="-1" role="dialog"
+            aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+                <div class="modal-content modern-modal">
+                    <div class="modal-header modern-modal-header">
+                        <div class="modal-title-wrapper">
+                            <div class="modal-icon">
+                                <i class="fa-solid fa-file-circle-plus"></i>
+                            </div>
+                            <div>
+                                <h5 class="modal-title" id="exampleModalLabel">Submit Complaint for Review</h5>
+                                <p class="modal-subtitle">Analyze complaint against case database</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body modern-modal-body">
+                        <!-- Serial Number Field -->
+                        <div class="modern-field">
+                            <label class="modern-label">
+                                <i class="fa-solid fa-barcode"></i>
+                                <span>Serial Number *</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                v-model="serialNumber" 
+                                class="modern-input" 
+                                placeholder="Enter serial number..."
+                                maxlength="50">
+                            <span class="char-counter">
+                                [[ serialNumber ? serialNumber.length : 0 ]] / 50 characters
+                            </span>
+                        </div>
+
+                        <!-- Title Field -->
+                        <div class="modern-field">
+                            <label class="modern-label">
+                                <i class="fa-solid fa-heading"></i>
+                                <span>Case Title *</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                v-model="title" 
+                                class="modern-input" 
+                                placeholder="Enter case title..."
+                                maxlength="500">
+                            <span class="char-counter" :class="{'text-danger': title && title.length > 450, 'text-warning': title && title.length > 400}">
+                                [[ title ? title.length : 0 ]] / 500 characters
+                            </span>
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="modern-field">
+                            <label class="modern-label">
+                                <i class="fa-solid fa-align-left"></i>
+                                <span>Description *</span>
+                            </label>
+                            <textarea 
+                                v-model="description" 
+                                class="modern-input" 
+                                rows="3"
+                                placeholder="Enter case description..."
+                                maxlength="1000"></textarea>
+                            <span class="char-counter" :class="{'text-danger': description && description.length > 900, 'text-warning': description && description.length > 800}">
+                                [[ description ? description.length : 0 ]] / 1000 characters
+                            </span>
+                        </div>
+                 
+                        <!-- Complaint's Name Field -->
+                        <div class="modern-field">
+                            <label class="modern-label">
+                                <i class="fa-solid fa-user"></i>
+                                <span>Complaint's Name</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                v-model="state.SELECTED_PERSON.first_name" 
+                                class="modern-input" 
+                                placeholder="Select a complaint..."
+                                readonly>
+                            <button class="modern-btn btn-primary w-100 mt-2" @click="openModal('complaints-profile')" style="background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);">
+                                <i class="fa-solid fa-users"></i>
+                                <span>Select Complaint</span>
+                            </button>
+                        </div>
+
+                        <!-- Mode Selection -->
+                        <div class="modern-field">
+                            <label class="modern-label">
+                                <i class="fa-solid fa-toggle-on"></i>
+                                <span>Submission Mode *</span>
+                            </label>
+                            <div class="mode-selection">
+                                <div class="mode-option">
+                                    <input 
+                                        class="mode-radio" 
+                                        type="radio" 
+                                        name="submissionMode" 
+                                        v-model="mode" 
+                                        value="1" 
+                                        id="pdfMode"
+                                        checked>
+                                    <label class="mode-label" for="pdfMode">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                        <span>PDF Document</span>
+                                    </label>
+                                </div>
+                                <div class="mode-option">
+                                    <input 
+                                        class="mode-radio" 
+                                        type="radio" 
+                                        name="submissionMode" 
+                                        v-model="mode"
+                                        value="2" 
+                                        @click="setupAudio()" 
+                                        id="speechMode">
+                                    <label class="mode-label" for="speechMode">
+                                        <i class="fa-solid fa-microphone"></i>
+                                        <span>Speech-to-Text</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Speech-to-Text Container -->
+                        <div class="speech-container" :hidden="mode == '1'">
+                            <!-- Microphone Selection -->
+                            <div class="modern-field">
+                                <label class="modern-label" for="micSelect">
+                                    <i class="fa-solid fa-microphone-lines"></i>
+                                    <span>Select Microphone</span>
+                                </label>
+                                <select id="micSelect" class="modern-input">
+                                    <option value="">Default Microphone</option>
+                                </select>
+                            </div>
+
+                            <!-- Recording Controls -->
+                            <div class="recording-controls">
+                                <button id="startBtn" class="recording-btn btn-start">
+                                    <i class="fa-solid fa-microphone"></i>
+                                    <span>Start Recording</span>
+                                </button>
+                                <button id="stopBtn" class="recording-btn btn-stop" disabled>
+                                    <i class="fa-solid fa-circle-stop"></i>
+                                    <span>Stop Recording</span>
+                                </button>
+                            </div>
+
+                            <!-- Audio Playback -->
+                            <div id="audioControls" class="audio-playback" style="display:none;">
+                                <div class="playback-wrapper">
+                                    <i class="fa-solid fa-volume-high playback-icon"></i>
+                                    <audio id="audioPlayback" controls class="audio-player"></audio>
+                                </div>
+                                <a id="downloadLink" class="download-btn" download="recording.webm">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span>Download Recording</span>
+                                </a>
+                            </div>
+
+                            <!-- Transcribe Button -->
+                            <button 
+                                class="modern-btn btn-primary w-100" 
+                                :disabled="transcribing_state == true" 
+                                @click="submitAudio()"
+                                style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); margin-top: 1rem;">
+                                <i class="fa-solid fa-pencil" v-if="transcribing_state == false"></i>
+                                <i class="fa-solid fa-spinner fa-spin" v-if="transcribing_state == true"></i>
+                                <span v-if="transcribing_state == false">Transcribe Audio</span>
+                                <span v-if="transcribing_state == true">Transcribing...</span>
+                            </button>
+
+                            <!-- Transcribed Text -->
+                            <div class="modern-field" v-if="transcribed" style="margin-top: 1rem;">
+                                <label class="modern-label">
+                                    <i class="fa-solid fa-file-lines"></i>
+                                    <span>Transcribed Text</span>
+                                </label>
+                                <textarea 
+                                    class="modern-input" 
+                                    v-model="transcribed" 
+                                    rows="5"
+                                    placeholder="Transcribed text will appear here..."></textarea>
+                            </div>
+
+                            <!-- Submit Transcribed Audio -->
+                            <button 
+                                class="modern-btn btn-primary w-100" 
+                                @click="addToLibrary(false)"
+                                :disabled="!transcribed || is_loading"
+                                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); margin-top: 1rem;">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Submit Transcription</span>
+                            </button>
+                        </div>
+      
+
+                        <!-- PDF Upload Container -->
+                        <div class="pdf-container" :hidden="mode == '2'">
+                            <div class="modern-field">
+                                <label class="modern-label">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                    <span>Upload PDF Document *</span>
+                                </label>
+                                <div class="file-upload-area" @click="triggerFileInput">
+                                    <input 
+                                        ref="pdfInput"
+                                        type="file" 
+                                        class="file-input"
+                                        id="fileInput"
+                                        accept=".pdf"
+                                        @change="handleFileSelect"
+                                        style="display: none;">
+                                    <div class="file-upload-content">
+                                        <i class="fa-solid fa-cloud-arrow-up" v-if="!selectedFileName"></i>
+                                        <i class="fa-solid fa-file-pdf file-selected-icon" v-if="selectedFileName"></i>
+                                        <p class="file-upload-text" v-if="!selectedFileName">
+                                            <strong>Click to upload</strong> or drag and drop<br>
+                                            <span style="font-size: 0.85rem; color: #94a3b8;">PDF files only (Max 20MB)</span>
+                                        </p>
+                                        <p class="file-selected" v-if="selectedFileName">
+                                            <i class="fa-solid fa-check-circle"></i>
+                                            <span>[[ selectedFileName ]]</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="form-hint">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                    The PDF will be analyzed for similarities with existing cases
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer modern-modal-footer">
+                        <button 
+                            type="button" 
+                            class="modern-btn btn-secondary"
+                            @click="closeModal('upload-research')">
+                            <i class="fa-solid fa-times"></i>
+                            <span>Cancel</span>
+                        </button>
+                        <button 
+                            type="button" 
+                            class="modern-btn btn-primary"
+                            @click="addToLibrary(mode == '1')"
+                            :disabled="is_loading"
+                            v-if="mode == '1'">
+                            <i class="fa-solid fa-upload" v-if="!is_loading"></i>
+                            <i class="fa-solid fa-spinner fa-spin" v-if="is_loading"></i>
+                            <span v-if="!is_loading">Upload & Analyze</span>
+                            <span v-if="is_loading">Uploading...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       <div class="modal fade" id="complaints-profile" tabindex="-1"
+            aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content modern-modal">
+                    <div class="modal-header modern-modal-header">
+                        <div class="modal-title-wrapper">
+                            <div class="modal-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div>
+                                <h5 class="modal-title" id="exampleModalLabel">Select Complaint</h5>
+                                <p class="modal-subtitle">Choose a complaint to associate with this case</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body modern-modal-body" style="overflow-x: auto; padding: 1.5rem;">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                {% include 'app/constants/complaint_table.html' %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="modal fade" id="view-details" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content modern-modal">
+                <div class="modal-header modern-modal-header">
+                    <div class="modal-title-wrapper">
+                        <div class="modal-icon">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title" id="exampleModalLabel">Matching Sources</h5>
+                            <p class="modal-subtitle">Documents found with similar content</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body modern-modal-body">
+                    <div class="modern-field">
+                        <label class="modern-label">
+                            <i class="fa-solid fa-files"></i>
+                            <span>Matched Documents ([[ activeProps.length ]])</span>
+                        </label>
+                        <div class="sources-list">
+                            <a 
+                                v-for="(objects, index) in activeProps" 
+                                :key="index"
+                                :href="[[ '/media/' + objects.location ]]"
+                                class="source-item"
+                                target="_blank">
+                                <div class="source-icon">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                                <div class="source-info">
+                                    <span class="source-title">[[ objects.title ]]</span>
+                                    <span class="source-probability" v-if="objects.probability">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                        [[ objects.probability ]]% Match Probability
+                                    </span>
+                                </div>
+                                <i class="fa-solid fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modern-modal-footer">
+                    <button 
+                        type="button" 
+                        class="modern-btn btn-secondary"
+                        @click="closeModal('view-details')">
+                        <i class="fa-solid fa-times"></i>
+                        <span>Close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fa-solid fa-file-circle-check"></i>
+            </div>
+            <div class="header-text">
+                <h2 class="page-title">Analyze Complaints</h2>
+                <p class="page-subtitle">Verify complaints against related cases for potential violations</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="credibility-card">
+        <div class="credibility-card-header">
+            <div class="card-header-content">
+                <div class="card-header-left">
+                    <div class="card-header-icon">
+                        <i class="fa-solid fa-table-list"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-header-title">Complaint Analysis Records</h5>
+                        <p class="card-header-subtitle">Review analyzed complaints and their matching sources</p>
+                    </div>
+                </div>
+                <button class="add-complaint-btn" @click="addResearch()" :disabled="is_loading">
+                    <i class="fa-solid fa-plus" v-if="!is_loading"></i>
+                    <i class="fa-solid fa-spinner fa-spin" v-if="is_loading"></i>
+                    <span>Submit Complaint</span>
+                </button>
+            </div>
+        </div>
+        <div class="credibility-card-body">
+            <!-- Search Bar -->
+            <div class="search-bar-container">
+                <div class="search-bar">
+                    <i class="fa-solid fa-search search-icon"></i>
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        placeholder="Search by complaint name, title, or description..."
+                        v-model="searchQuery"
+                        id="credibility-search"
+                    >
+                    <button class="search-clear" id="clear-search" @click="clearSearch()" v-show="searchQuery" style="display: none;">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Records Counter -->
+            <div class="mobile-records-info">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <span>Showing [[ displayRecords.length ]] of [[ records.length ]] records</span>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="modern-table" id="reserach-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="fa-solid fa-barcode"></i>
+                                        <span>Serial No.</span>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="fa-solid fa-user"></i>
+                                        <span>Complaint</span>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="fa-solid fa-file"></i>
+                                        <span>Case No.</span>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="fa-solid fa-align-left"></i>
+                                        <span>Description</span>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="fa-solid fa-calendar-days"></i>
+                                        <span>Date Created</span>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="fa-solid fa-percent"></i>
+                                        <span>Match Level</span>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="fa-solid fa-check-circle"></i>
+                                        <span>Has Matches</span>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="fa-solid fa-cog"></i>
+                                        <span>Actions</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(object, index) in filteredRecords" :key="index">
+                                <td data-label="Serial No.">
+                                    <div class="cell-content">
+                                        <span class="serial-badge" v-if="object.serial_number">
+                                            <i class="fa-solid fa-barcode"></i>
+                                            [[ object.serial_number ]]
+                                        </span>
+                                        <span v-else class="text-muted">N/A</span>
+                                    </div>
+                                </td>
+                                
+                                <td data-label="Complaint">
+                                    <div class="cell-content">
+                                        <span v-if="object.person" class="person-name">
+                                            <i class="fa-solid fa-user-circle"></i>
+                                            [[ object.person.first_name ]] [[ object.person.middle_name ]] [[ object.person.last_name ]]
+                                        </span>
+                                        <span v-else class="text-muted">No person assigned</span>
+                                    </div>
+                                </td>
+                                
+                                <td data-label="Case No.">
+                                    <a :href="[[ object.file_location ]]" class="case-link" target="_blank">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                        <span>[[ object.title ]]</span>
+                                    </a>
+                                </td>
+                                
+                                <td data-label="Description">
+                                    <div class="cell-content description-text">
+                                        [[ object.description || 'No description' ]]
+                                    </div>
+                                </td>
+
+                                <td data-label="Date Created">
+                                    <div class="date-content">
+                                        <i class="fa-solid fa-calendar"></i>
+                                        <span>[[ formatDate(object.created_at) ]]</span>
+                                    </div>
+                                </td>
+                            
+                                <td data-label="Match Level">
+                                    <div class="match-level">
+                                        <span class="percentage" :class="{'high-match': object.plagiarism_level >= 0.5, 'medium-match': object.plagiarism_level >= 0.3 && object.plagiarism_level < 0.5, 'low-match': object.plagiarism_level < 0.3}">
+                                            [[ (object.plagiarism_level * 100).toFixed(1) ]]%
+                                        </span>
+                                    </div>
+                                </td>
+                                
+                                <td data-label="Has Matches">
+                                    <span v-if="object.is_plagirized === true" class="modern-badge badge-success">
+                                        <i class="fa-solid fa-check"></i>
+                                        <span>Yes</span>
+                                    </span>
+                                    <span v-else class="modern-badge badge-secondary">
+                                        <i class="fa-solid fa-times"></i>
+                                        <span>No</span>
+                                    </span>
+                                </td>
+                                
+                                <td data-label="Actions">
+                                    <div class="action-buttons">
+                                        <button 
+                                            v-if="object.is_plagirized === true"
+                                            class="action-btn btn-view"
+                                            @click="viewDetails(object.remarks)">
+                                            <i class="fa-solid fa-eye"></i>
+                                            <span>View Sources</span>
+                                        </button>
+                                        <button 
+                                            v-else
+                                            class="action-btn btn-view"
+                                            @click="viewDetails(object.remarks)" 
+                                            disabled>
+                                            <i class="fa-solid fa-eye"></i>
+                                            <span>View Sources</span>
+                                        </button>
+                                        <button 
+                                            class="action-btn btn-delete"
+                                            @click="confirmDelete(object)"
+                                            :disabled="is_loading"
+                                            title="Delete">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Credibility Page */
+.modern-credibility-page {
+    padding: 2rem 1.5rem;
+    min-height: calc(100vh - 120px);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-size: 0.9rem;
+}
+
+.modern-credibility-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(74, 144, 226, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(91, 127, 191, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: 2rem;
+    animation: fadeInDown 0.7s ease-out;
+    position: relative;
+    z-index: 1;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    box-shadow: 
+        0 4px 20px rgba(74, 144, 226, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(74, 144, 226, 0.12);
+    transition: all 0.4s ease;
+}
+
+.header-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 30px rgba(74, 144, 226, 0.12),
+        0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.header-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 8px 24px rgba(74, 144, 226, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    animation: pulse 3s ease-in-out infinite;
+}
+
+.header-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.header-icon i {
+    font-size: 1.5rem;
+    color: white;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+    position: relative;
+    z-index: 1;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+}
+
+.page-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* Credibility Card */
+.credibility-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    box-shadow: 
+        0 4px 20px rgba(74, 144, 226, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(74, 144, 226, 0.12);
+    overflow: hidden;
+    animation: fadeInUp 0.7s ease-out 0.2s both;
+    position: relative;
+    z-index: 1;
+}
+
+.credibility-card-header {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.06) 0%, rgba(91, 127, 191, 0.04) 100%);
+    padding: 1.75rem;
+    border-bottom: 2px solid rgba(74, 144, 226, 0.1);
+    position: relative;
+}
+
+.credibility-card-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(74, 144, 226, 0.3) 50%, 
+        transparent 100%);
+}
+
+.card-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.card-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+}
+
+.card-header-icon {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 6px 18px rgba(74, 144, 226, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.card-header-icon:hover {
+    transform: rotate(-5deg) scale(1.05);
+}
+
+.card-header-icon i {
+    font-size: 1.45rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.card-header-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.3rem 0;
+    letter-spacing: -0.3px;
+}
+
+.card-header-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.add-complaint-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.75rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    white-space: nowrap;
+}
+
+.add-complaint-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.add-complaint-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.add-complaint-btn i {
+    font-size: 1rem;
+}
+
+.credibility-card-body {
+    padding: 1.75rem;
+}
+
+/* Search Bar Container */
+.search-bar-container {
+    margin-bottom: 1.75rem;
+    animation: fadeInUp 0.7s ease-out 0.3s both;
+}
+
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.search-bar:focus-within {
+    border-color: #4A90E2;
+    box-shadow: 
+        0 0 0 4px rgba(74, 144, 226, 0.08),
+        0 4px 12px rgba(74, 144, 226, 0.15);
+    transform: translateY(-2px);
+}
+
+.search-icon {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin-right: 0.875rem;
+    transition: color 0.3s ease;
+}
+
+.search-bar:focus-within .search-icon {
+    color: #4A90E2;
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.95rem;
+    color: #1e293b;
+    padding: 0.25rem 0;
+    font-weight: 500;
+}
+
+.search-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.search-clear {
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #64748b;
+}
+
+.search-clear:hover {
+    background: #ef4444;
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* Mobile Records Info */
+.mobile-records-info {
+    display: none;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #0369a1;
+    font-weight: 600;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 6px rgba(3, 105, 161, 0.1);
+}
+
+.mobile-records-info i {
+    font-size: 0.95rem;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+    padding: 0.875rem;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* Modern Table */
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.modern-table thead {
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    position: relative;
+}
+
+.modern-table thead::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.2) 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        rgba(255, 255, 255, 0.2) 100%);
+}
+
+.modern-table thead th {
+    padding: 1.15rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+    border: none;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.3px;
+}
+
+.th-content {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.th-content i {
+    font-size: 1rem;
+    opacity: 0.95;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+.modern-table tbody tr {
+    border-bottom: 1px solid #e8eef5;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.modern-table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.04) 0%, rgba(91, 127, 191, 0.03) 100%);
+    transform: translateX(4px);
+    box-shadow: -4px 0 0 rgba(74, 144, 226, 0.3);
+}
+
+.modern-table tbody td {
+    padding: 1.15rem 1rem;
+    color: #475569;
+    font-size: 0.925rem;
+    vertical-align: middle;
+}
+
+.cell-content {
+    max-width: 300px;
+    word-break: break-word;
+    line-height: 1.6;
+}
+
+.person-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.person-name i {
+    color: #4A90E2;
+    font-size: 1.1rem;
+}
+
+.serial-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+    white-space: nowrap;
+}
+
+.serial-badge i {
+    font-size: 0.95rem;
+}
+
+.case-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #4A90E2;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.case-link:hover {
+    color: #357ABD;
+    gap: 0.85rem;
+}
+
+.case-link i {
+    color: #ef4444;
+    font-size: 1.1rem;
+}
+
+.description-text {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.date-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.date-content i {
+    color: #4A90E2;
+    font-size: 1rem;
+}
+
+.match-level {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.percentage {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.high-match {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.medium-match {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+.low-match {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+/* Modern Badge */
+.modern-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 24px;
+    font-size: 0.825rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+.badge-secondary {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(100, 116, 139, 0.25);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.15rem;
+    border: none;
+    border-radius: 24px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+/* Icon-only buttons (Delete) in table */
+.action-buttons .btn-delete {
+    padding: 0.55rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-buttons .btn-delete i {
+    margin: 0 !important;
+    line-height: 1;
+}
+
+.btn-view {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+}
+
+.btn-view:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+}
+
+.btn-view:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+}
+
+.btn-delete:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+}
+
+.btn-delete:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Select Button - Override for modal */
+#complaints-profile .btn-select {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+#complaints-profile .btn-select:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+}
+
+/* Hide DataTables default search */
+.dataTables_filter {
+    display: none !important;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+    .modern-credibility-page {
+        padding: 1.5rem 1rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .header-icon {
+        width: 55px;
+        height: 55px;
+    }
+
+    .header-icon i {
+        font-size: 1.5rem;
+    }
+
+    .credibility-card-header {
+        padding: 1.25rem;
+    }
+
+    .card-header-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .card-header-icon i {
+        font-size: 1.2rem;
+    }
+
+    .card-header-title {
+        font-size: 1.15rem;
+    }
+
+    .add-complaint-btn {
+        padding: 0.65rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .modern-credibility-page {
+        padding: 1.25rem 0.875rem;
+    }
+
+    .header-content {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .header-icon i {
+        font-size: 1.35rem;
+    }
+
+    .page-title {
+        font-size: 1.35rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .credibility-card-header {
+        padding: 1rem;
+    }
+
+    .card-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .add-complaint-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .credibility-card-body {
+        padding: 1rem;
+    }
+
+    .search-bar {
+        padding: 0.625rem 1rem;
+    }
+
+    .search-input {
+        font-size: 0.875rem;
+    }
+
+    .table-wrapper {
+        padding: 0.5rem;
+    }
+
+    .modern-table thead th,
+    .modern-table tbody td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .cell-content {
+        max-width: 200px;
+        font-size: 0.85rem;
+    }
+
+    .modern-badge {
+        padding: 0.4rem 0.875rem;
+        font-size: 0.75rem;
+    }
+
+    .action-btn {
+        padding: 0.45rem 0.95rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modern-credibility-page {
+        padding: 1rem 0.75rem;
+    }
+
+    .header-content {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-icon {
+        width: 45px;
+        height: 45px;
+    }
+
+    .header-icon i {
+        font-size: 1.25rem;
+    }
+
+    .page-title {
+        font-size: 1.2rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .credibility-card-body {
+        padding: 0.75rem;
+    }
+
+    .search-bar {
+        padding: 0.5rem 0.875rem;
+    }
+
+    .search-icon {
+        font-size: 1rem;
+        margin-right: 0.625rem;
+    }
+
+    .search-input {
+        font-size: 0.8rem;
+    }
+
+    .search-input::placeholder {
+        font-size: 0.75rem;
+    }
+
+    .search-clear {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* Show mobile records info */
+    .mobile-records-info {
+        display: flex;
+    }
+
+    .table-wrapper {
+        padding: 0.35rem;
+    }
+
+    /* Hide DataTables info on mobile */
+    .dataTables_info,
+    .dataTables_paginate {
+        display: none !important;
+    }
+
+    /* Stack table for mobile */
+    .modern-table,
+    .modern-table thead,
+    .modern-table tbody,
+    .modern-table tr,
+    .modern-table td {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .modern-table thead {
+        display: none !important;
+    }
+
+    .modern-table tbody tr {
+        margin-bottom: 1.25rem;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background: white;
+        border: 1px solid #e2e8f0;
+    }
+
+    .modern-table tbody td {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1rem;
+        text-align: right !important;
+        border-bottom: 1px solid #f1f5f9;
+        position: relative;
+        padding-left: 1rem !important;
+        min-height: 3.5rem;
+    }
+
+    .modern-table tbody td:before {
+        content: attr(data-label);
+        position: relative;
+        left: 0;
+        top: 0;
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        flex-shrink: 0;
+        margin-right: 1rem;
+    }
+
+    .modern-table tbody td:last-child {
+        border-bottom: none;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+
+    .cell-content {
+        max-width: 100%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: #334155;
+    }
+
+    .person-name, .case-link {
+        display: inline-flex;
+        font-size: 0.9rem;
+    }
+
+    .modern-badge {
+        display: inline-flex;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .action-buttons {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .action-buttons .btn-delete {
+        width: 40px;
+        flex: 0 0 40px;
+        min-width: 40px;
+    }
+}
+
+/* Modern Modal Styles */
+.modern-modal {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modern-modal-header {
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    padding: 1.75rem;
+    border-bottom: none;
+    position: relative;
+}
+
+.modern-modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.3;
+}
+
+.modal-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+    position: relative;
+    z-index: 1;
+}
+
+.modal-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modal-icon i {
+    font-size: 1.35rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.modal-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.modal-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    margin: 0.25rem 0 0 0;
+}
+
+.modern-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.modern-close:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+.modern-modal-body {
+    padding: 1.75rem;
+    background: #fafbfc;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.modern-field {
+    margin-bottom: 1.35rem;
+}
+
+.modern-field:last-child {
+    margin-bottom: 0;
+}
+
+.modern-label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.925rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.6rem;
+}
+
+.modern-label i {
+    color: #4A90E2;
+    font-size: 1rem;
+}
+
+.modern-input {
+    width: 100%;
+    padding: 0.875rem 1.15rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.925rem;
+    color: #1e293b;
+    background: white;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.modern-input:focus {
+    outline: none;
+    border-color: #4A90E2;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.08);
+}
+
+.modern-input::placeholder {
+    color: #94a3b8;
+}
+
+.modern-input[readonly] {
+    background: #f1f5f9;
+    cursor: default;
+}
+
+.char-counter {
+    display: block;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.35rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.char-counter.text-success {
+    color: #10b981 !important;
+}
+
+.char-counter.text-warning {
+    color: #f59e0b !important;
+}
+
+.char-counter.text-danger {
+    color: #ef4444 !important;
+}
+
+.form-hint {
+    display: block;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+}
+
+.form-hint i {
+    color: #4A90E2;
+}
+
+/* Mode Selection */
+.mode-selection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.mode-option {
+    position: relative;
+}
+
+.mode-radio {
+    position: absolute;
+    opacity: 0;
+}
+
+.mode-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.mode-label i {
+    font-size: 2rem;
+    color: #64748b;
+    transition: all 0.3s ease;
+}
+
+.mode-label span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.mode-radio:checked + .mode-label {
+    border-color: #4A90E2;
+    background: rgba(74, 144, 226, 0.05);
+}
+
+.mode-radio:checked + .mode-label i {
+    color: #4A90E2;
+    transform: scale(1.1);
+}
+
+.mode-radio:checked + .mode-label span {
+    color: #4A90E2;
+}
+
+.mode-label:hover {
+    border-color: #4A90E2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+}
+
+/* Speech-to-Text Container */
+.speech-container {
+    border-top: 2px solid #e2e8f0;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.recording-controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.recording-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.925rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-start {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+.btn-start:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+}
+
+.btn-stop {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+}
+
+.btn-stop:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+}
+
+.btn-stop:disabled,
+.btn-start:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.audio-playback {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.playback-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.playback-icon {
+    font-size: 1.5rem;
+    color: #4A90E2;
+}
+
+.audio-player {
+    flex: 1;
+    height: 40px;
+}
+
+.download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(74, 144, 226, 0.25);
+}
+
+.download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(74, 144, 226, 0.35);
+    color: white;
+}
+
+/* PDF Upload Container */
+.pdf-container {
+    border-top: 2px solid #e2e8f0;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.file-upload-area {
+    position: relative;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background: white;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: #4A90E2;
+    background: rgba(74, 144, 226, 0.02);
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-upload-content {
+    pointer-events: none;
+}
+
+.file-upload-content i {
+    font-size: 3rem;
+    color: #4A90E2;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.file-selected-icon {
+    color: #ef4444 !important;
+}
+
+.file-upload-text {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.file-upload-text strong {
+    color: #4A90E2;
+    font-weight: 600;
+}
+
+.file-selected {
+    color: #10b981;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.file-selected i {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+/* Sources List */
+.sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.source-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    color: #1e293b;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.source-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #4A90E2 0%, #5B7FBF 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.source-item:hover {
+    border-color: #4A90E2;
+    background: rgba(74, 144, 226, 0.05);
+    transform: translateX(6px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+}
+
+.source-item:hover::before {
+    opacity: 1;
+}
+
+.source-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.source-item:hover .source-icon {
+    transform: scale(1.05);
+}
+
+.source-icon i {
+    font-size: 1.5rem;
+    color: #ef4444;
+}
+
+.source-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.source-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+.source-probability {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: #10b981;
+    font-weight: 600;
+}
+
+.source-probability i {
+    font-size: 0.85rem;
+    color: #10b981;
+}
+
+.source-item > i:last-child {
+    font-size: 0.9rem;
+    color: #4A90E2;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.source-item:hover > i:last-child {
+    transform: translateX(4px);
+}
+
+.modern-modal-footer {
+    padding: 1.25rem 1.75rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 0.85rem;
+    justify-content: flex-end;
+}
+
+.modern-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 1.65rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.925rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease;
+}
+
+.modern-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.modern-btn span,
+.modern-btn i {
+    position: relative;
+    z-index: 1;
+}
+
+.modern-btn.btn-secondary {
+    background: #64748b;
+    color: white;
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.25);
+}
+
+.modern-btn.btn-secondary:hover {
+    background: #475569;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(100, 116, 139, 0.35);
+}
+
+.modern-btn.btn-primary {
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(74, 144, 226, 0.3);
+}
+
+.modern-btn.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
+}
+
+.modern-btn.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 767.98px) {
+    .mode-selection {
+        grid-template-columns: 1fr;
+    }
+
+    .recording-controls {
+        flex-direction: column;
+    }
+
+    .modern-modal-footer {
+        flex-direction: column;
+    }
+
+    .modern-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+
+new Vue({
+    delimiters: ["[[", "]]"],
+    el: "#" + '{{ obj_name }}',
+    data: {
+        records: [],
+        activeProps: [],
+        is_loading: false,
+        fileUpload: null,
+        serialNumber: null,
+        title: null,
+        description: null,
+        transcribed: '',
+        selectedFileName: null,
+        // 👇 added for audio handling
+        recordedBlob: null,
+        recordedUrl: null,
+        mode: "1",
+        transcribing_state: false,
+
+        state: {
+            PERSON: {
+                "first_name": "",
+                "middle_name": "",
+                "last_name": "",
+                "contact_number": "",
+                "address": ""
+            },
+
+            SELECTED_PERSON: {}
+        },
+
+        persons: [],
+        filteredPersons: [],
+        filteredRecords: [],
+        searchQuery: '',
+        dataTable: null,
+        isInitializingTable: false,
+        searchTimeout: null,
+        showEditDelete: false
+
+    },
+    computed: {
+        displayRecords() {
+            return this.filteredRecords;
+        }
+    },
+    watch: {
+        searchQuery() {
+            this.filterRecords();
+        }
+    },
+    mounted() {
+
+        Vue.config.devtools = true 
+        if (document.querySelector("#" + '{{ obj_name }}')) {
+            console.log("Mounted " + '{{ obj_name }}' + " page.")
+        }
+
+        this.is_loading = false
+        this.getRecords()  // This will call filterRecords() which calls initDataTable()
+        this.getProfile()
+
+        // Search functionality
+        const searchInput = document.getElementById('credibility-search');
+        const clearBtn = document.getElementById('clear-search');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                // Clear any existing timeout
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
+                
+                const value = e.target.value;
+                if (clearBtn) clearBtn.style.display = value ? 'flex' : 'none';
+                
+                // Debounce the search - wait 300ms after user stops typing
+                this.searchTimeout = setTimeout(() => {
+                    this.searchQuery = value.toLowerCase();
+                    this.filterRecords();
+                }, 300);
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                this.searchQuery = '';
+                clearBtn.style.display = 'none';
+                this.filterRecords();
+            });
+        }
+    },
+    methods: {
+        formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return date.toLocaleDateString('en-US', options);
+        },
+        
+        clearSearch() {
+            this.searchQuery = '';
+            const searchInput = document.getElementById('credibility-search');
+            if (searchInput) searchInput.value = '';
+            this.filterRecords();
+        },
+        
+        filterRecords() {
+            let filtered = this.records;
+
+            // Apply search query
+            if (this.searchQuery) {
+                const query = this.searchQuery.toLowerCase();
+                filtered = filtered.filter(record => {
+                    const personName = record.person 
+                        ? `${record.person.first_name} ${record.person.middle_name} ${record.person.last_name}`.toLowerCase()
+                        : '';
+                    const serialNumber = (record.serial_number || '').toLowerCase();
+                    const title = (record.title || '').toLowerCase();
+                    const description = (record.description || '').toLowerCase();
+                    
+                    return serialNumber.includes(query) ||
+                           personName.includes(query) || 
+                           title.includes(query) || 
+                           description.includes(query);
+                });
+            }
+
+            this.filteredRecords = filtered;
+
+            // Destroy existing DataTable immediately
+            if ($.fn.DataTable.isDataTable('#reserach-table')) {
+                $('#reserach-table').DataTable().destroy();
+            }
+            this.dataTable = null;
+            this.isInitializingTable = false;
+            
+            // Reinitialize after Vue updates DOM
+            this.$nextTick(() => {
+                this.initDataTable();
+            });
+        },
+
+        initDataTable() {
+            // Prevent simultaneous initializations
+            if (this.isInitializingTable) {
+                console.log('Already initializing, skipping...');
+                return;
+            }
+            
+            this.isInitializingTable = true;
+            
+            // Double check and destroy if exists
+            if ($.fn.DataTable.isDataTable('#reserach-table')) {
+                $('#reserach-table').DataTable().destroy();
+            }
+            
+            // Clear the reference
+            this.dataTable = null;
+            
+            // Initialize DataTable
+            try {
+                this.dataTable = $('#reserach-table').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    searching: false,
+                    language: {
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    }
+                });
+                console.log('DataTable initialized successfully');
+            } catch (error) {
+                console.error('DataTable initialization error:', error);
+            }
+            
+            // Reset flag after initialization
+            setTimeout(() => {
+                this.isInitializingTable = false;
+            }, 100);
+        },
+
+        selectPerson(person) {
+            this.state.SELECTED_PERSON = person
+            console.log(this.state.SELECTED_PERSON)
+            closeModal('complaints-profile')
+        },
+
+        async getProfile() {
+
+            const csrftoken = getCookie("csrftoken");
+            axios.defaults.headers.common["X-CSRFToken"] = csrftoken;
+            const url = '/api/list-create/person/'
+            const result = await axios.get(url)
+            
+            if (result) {
+                this.persons = result.data
+                this.filteredPersons = result.data
+            }
+        },
+
+        setupAudio() {
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let selectedDeviceId = null;
+
+        const micSelect = document.getElementById("micSelect");
+        const startBtn = document.getElementById("startBtn");
+        const stopBtn = document.getElementById("stopBtn");
+        const audioPlayback = document.getElementById("audioPlayback");
+        const downloadLink = document.getElementById("downloadLink");
+        const audioControls = document.getElementById("audioControls");
+
+        navigator.mediaDevices.enumerateDevices().then(devices => {
+            devices.filter(d => d.kind === "audioinput").forEach(device => {
+                const option = document.createElement("option");
+                option.value = device.deviceId;
+                option.text = device.label || `Microphone ${micSelect.length + 1}`;
+                micSelect.appendChild(option);
+            });
+        });
+
+        micSelect.addEventListener("change", () => {
+            selectedDeviceId = micSelect.value;
+        });
+
+        startBtn.onclick = async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined }
+            });
+
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                // update Vue data 👇
+                this.recordedBlob = audioBlob;
+                this.recordedUrl = audioUrl;
+
+                audioPlayback.src = audioUrl;
+                downloadLink.href = audioUrl;
+                audioControls.style.display = "block";
+            };
+
+            mediaRecorder.start();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        };
+
+        stopBtn.onclick = () => {
+            mediaRecorder.stop();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        };
+
+        this.mode = "1"
+        console.log("Done setting up audio.")
+        },
+        async submitAudio() {
+            this.transcribing_state = true
+             const csrftoken = getCookie("csrftoken");
+            axios.defaults.headers.common["X-CSRFToken"] = csrftoken;
+            const url = '/api/transcribe-audio/'
+           if (!this.recordedBlob) {
+                alert("No audio recorded yet!");
+                this.transcribing_state = false;
+                return;
+            }
+            const formData = new FormData();
+            // use webm to match the blob content-type (MediaRecorder uses webm)
+            formData.append("audio", this.recordedBlob, "recording.webm");
+
+            const result = await axios.post(url, formData)
+            if (result) {
+                console.log(result.data.transcription.text)
+                this.transcribed = result.data.transcription.text
+            }
+
+            this.transcribing_state = false
+
+        },
+
+        addResearch () {
+            // Reset form when opening modal
+            this.serialNumber = null;
+            this.title = null;
+            this.description = null;
+            this.selectedFileName = null;
+            this.fileUpload = null;
+            this.transcribed = '';
+            this.mode = "1";
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) fileInput.value = '';
+            openModal('upload-research')
+        },
+        
+        triggerFileInput() {
+            // Use $refs to trigger file input
+            this.$refs.pdfInput.click();
+        },
+        
+        handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.selectedFileName = file.name;
+                console.log('File selected:', file.name);
+            } else {
+                this.selectedFileName = null;
+            }
+        },
+        
+        viewDetails (props) {
+            this.activeProps = JSON.parse(props)
+
+            openModal('view-details')
+        },
+
+        async getRecords () {
+            var result = await axios.get("/api/list-create/credibility/")
+            this.records = result.data
+            
+            // Apply current search filter to new data
+            this.filterRecords()
+        },
+        async generateDataset (object) {
+            this.is_loading = true;
+            const identifier = String(object.id)
+            var result = await axios.get("/api/analyze-paper/" + identifier + "/")
+            .then((response) => {
+                console.log(response)
+            })
+            .catch((error) => {
+                console.error(error)
+            });
+            this.is_loading = false
+            this.getRecords()
+        },
+        confirmDelete (props) {
+            Swal.fire({
+                title: 'Delete Complaint?',
+                text: `Are you sure you want to delete this complaint record?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.deleteRecords(props);
+                }
+            });
+        },
+        
+        async deleteRecords (props) {
+            const csrftoken = getCookie("csrftoken");
+            axios.defaults.headers.common["X-CSRFToken"] = csrftoken;
+            const id = props.id
+            await axios.delete("/api/get-update-destroy/credibility/" + String(id) + "/")
+                .then(() => {
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: 'The complaint record has been deleted.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                })
+                .catch((error) => {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to delete the complaint record.',
+                        icon: 'error'
+                    });
+                });
+            
+            // Clear search and refresh all records
+            this.searchQuery = '';
+            const searchInput = document.getElementById('credibility-search');
+            if (searchInput) searchInput.value = '';
+            const clearBtn = document.getElementById('clear-search');
+            if (clearBtn) clearBtn.style.display = 'none';
+            
+            await this.getRecords();
+        },
+        async addToLibrary(is_pdf = true) {
+            this.is_loading = true  
+            const csrftoken = getCookie("csrftoken");
+            axios.defaults.headers.common["X-CSRFToken"] = csrftoken;
+
+            const form_data = new FormData();
+
+            const fileInput = document.getElementById('fileInput');
+
+            let file = null;
+
+            if (is_pdf && fileInput && fileInput.files.length > 0) {
+                file = fileInput.files[0];
+                form_data.append('file_location', file);
+            } else {
+                form_data.append('file_location', "");  
+            }
+            
+            form_data.append('image', file);
+            form_data.append('serial_number', this.serialNumber);
+            form_data.append('title', this.title);
+            form_data.append('description', this.description);
+            form_data.append('plagiarism_level', 0.00);
+            form_data.append('remarks', 'No Remarks Yet');
+            form_data.append('is_pdf', is_pdf)
+            form_data.append('non_pdf_text', this.transcribed)
+            
+            // Use the selected person's ID for complaint_id
+            if (this.state.SELECTED_PERSON && this.state.SELECTED_PERSON.id) {
+                form_data.append('complaint_id', this.state.SELECTED_PERSON.id)
+            }
+            
+            console.log('Serial Number:', this.serialNumber)
+            console.log('Person ID:', this.state.SELECTED_PERSON ? this.state.SELECTED_PERSON.id : 'None')
+            
+            await axios
+                .post("/api/list-create/credibility/", form_data)
+                .then((response) => {
+                    console.log(response);
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Complaint has been submitted successfully.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                })
+                .catch((error) => {
+                    console.error(error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to submit complaint. Please try again.',
+                        icon: 'error'
+                    });
+                });
+
+            this.serialNumber = null
+            this.title = null
+            this.description = null
+            this.fileUpload = null
+            this.selectedFileName = null
+            this.transcribed = ''
+            this.recordedBlob = null
+            this.recordedUrl = null
+            
+            // Clear search and refresh all records
+            this.searchQuery = '';
+            const searchInput = document.getElementById('credibility-search');
+            if (searchInput) searchInput.value = '';
+            const clearBtn = document.getElementById('clear-search');
+            if (clearBtn) clearBtn.style.display = 'none';
+            
+            closeModal('upload-research')
+            this.is_loading = false
+            
+            // Refresh the table after a short delay
+            await this.getRecords()
+        }
+
+    },
+});
+</script>
+{% endblock %}

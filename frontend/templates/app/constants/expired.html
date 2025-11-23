@@ -1,0 +1,34 @@
+{% extends "app/layout.html" %}
+{% load static %}
+{% block content %}
+
+<center>
+    <h1 class="display-1 fw-bold lh-1 mb-3"
+        style="font-size: 10rem; color: var(--bs-warning)">
+        <i class="fa-regular fa-triangle-exclamation"></i>
+    </h1>
+
+    <h1 class="display-1 mb-3">
+        We'll be back as soon as possible!
+    </h1>
+
+    <p class="lead">
+        To prevent copyright issue(s) the system was set to expired. If you want to continue
+        using the system, please do so contact the developer, and tell the purpose of usage.
+    </h1>
+
+    <p class="lead" hidden>
+        Error Message: {{ message }}
+    </p>
+
+    <div class="row" hidden>
+        <div class="col col-lg-12">
+            <button class="btn btn-danger">
+                Report an Issue?
+            </button>
+        </div>
+    </div>
+
+</center>
+
+{% endblock %}

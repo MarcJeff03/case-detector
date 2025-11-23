@@ -1,0 +1,661 @@
+<div class="offcanvas offcanvas-start modern-sidebar" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+    <!-- Header -->
+    <div class="offcanvas-header modern-sidebar-header">
+        <div class="d-flex align-items-center gap-3">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+            <div class="sidebar-brand">
+                <span class="brand-title">Case Detector</span>
+                <span class="brand-desc">BERT NLP System</span>
+            </div>
+        </div>
+        <button type="button" class="btn-close modern-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    
+    <!-- Body -->
+    <div class="offcanvas-body modern-sidebar-body">
+        <!-- User Profile Section -->
+        <div class="user-profile-section">
+            <div class="user-avatar-wrapper">
+                <img src="https://ui-avatars.com/api/?name={{ request.user|urlencode }}&background=4A90E2&color=fff&size=200&bold=true" 
+                     alt="User Avatar" 
+                     class="user-avatar">
+                <div class="user-status"></div>
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{ request.user }}</div>
+                <div class="user-greeting">Welcome back!</div>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a class="nav-link modern-nav-link" href="{% url 'home' %}" data-page="home">
+                        <div class="nav-icon">
+                            <i class="fa-solid fa-house"></i>
+                        </div>
+                        <span class="nav-text">Home</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link modern-nav-link" href="{% url 'datasets' %}" data-page="datasets">
+                        <div class="nav-icon">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <span class="nav-text">Datasets</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link modern-nav-link" href="{% url 'complaints' %}" data-page="complaints">
+                        <div class="nav-icon">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                        </div>
+                        <span class="nav-text">Complaints</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link modern-nav-link" href="{% url 'library' %}" data-page="library">
+                        <div class="nav-icon">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                        <span class="nav-text">Add References</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link modern-nav-link" href="{% url 'credibility' %}" data-page="credibility">
+                        <div class="nav-icon">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i>
+                        </div>
+                        <span class="nav-text">Analyze Cases</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Divider -->
+            <div class="nav-divider"></div>
+
+            <!-- Logout -->
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a class="nav-link modern-nav-link logout-link" href="{% url 'logout' %}">
+                        <div class="nav-icon">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </div>
+                        <span class="nav-text">Sign Out</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Footer Info -->
+        <div class="sidebar-footer">
+            <small class="text-muted">
+                <i class="fa-regular fa-copyright me-1"></i>
+                2025 Case Detector
+            </small>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Sidebar Base */
+.modern-sidebar {
+    width: 320px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    border: none;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+    z-index: 1055 !important; /* Above navbar */
+}
+
+/* Sidebar Header */
+.modern-sidebar-header {
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-sidebar-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.4;
+    z-index: 0;
+}
+
+.sidebar-logo {
+    width: 42px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.sidebar-logo i {
+    font-size: 1.3rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.sidebar-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+.brand-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.brand-desc {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.modern-close {
+    position: relative;
+    z-index: 1;
+    opacity: 0.9;
+    filter: brightness(0) invert(1);
+    transition: all 0.3s ease;
+}
+
+.modern-close:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+/* Sidebar Body */
+.modern-sidebar-body {
+    padding: 1rem 0.875rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+}
+
+/* User Profile Section */
+.user-profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem;
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.08) 0%, rgba(91, 127, 191, 0.05) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(74, 144, 226, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.user-profile-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(74, 144, 226, 0.1) 0%, transparent 70%);
+}
+
+.user-avatar-wrapper {
+    position: relative;
+}
+
+.user-avatar {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    border: 2.5px solid white;
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.25);
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+}
+
+.user-status {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: #10b981;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.user-info {
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
+}
+
+.user-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 0.5rem;
+}
+
+.user-greeting {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Navigation Menu */
+.sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.modern-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.875rem;
+    border-radius: 12px;
+    color: #475569;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid transparent;
+}
+
+.modern-nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.08) 0%, rgba(91, 127, 191, 0.05) 100%);
+    transition: width 0.3s ease;
+    z-index: 0;
+}
+
+.modern-nav-link:hover::before {
+    width: 100%;
+}
+
+.modern-nav-link:hover {
+    color: #4A90E2;
+    background: rgba(74, 144, 226, 0.05);
+    border-color: rgba(74, 144, 226, 0.15);
+    transform: translateX(4px);
+}
+
+.modern-nav-link.active {
+    color: #4A90E2;
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.12) 0%, rgba(91, 127, 191, 0.08) 100%);
+    border-color: rgba(74, 144, 226, 0.25);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+}
+
+.modern-nav-link.active .nav-indicator {
+    width: 4px;
+}
+
+.nav-icon {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(74, 144, 226, 0.08);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.modern-nav-link:hover .nav-icon,
+.modern-nav-link.active .nav-icon {
+    background: rgba(74, 144, 226, 0.15);
+    transform: scale(1.05);
+}
+
+.nav-icon i {
+    font-size: 1rem;
+    color: #4A90E2;
+}
+
+.nav-text {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.nav-indicator {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 24px;
+    background: linear-gradient(135deg, #4A90E2 0%, #5B7FBF 100%);
+    border-radius: 4px 0 0 4px;
+    transition: width 0.3s ease;
+}
+
+/* Logout Link */
+.logout-link {
+    color: #ef4444 !important;
+}
+
+.logout-link:hover {
+    background: rgba(239, 68, 68, 0.05) !important;
+    border-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+.logout-link .nav-icon {
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.logout-link:hover .nav-icon {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.logout-link .nav-icon i {
+    color: #ef4444;
+}
+
+/* Nav Divider */
+.nav-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+    margin: 0.5rem 0;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    text-align: center;
+    padding: 0.75rem 0 0.5rem;
+    border-top: 1px solid #e2e8f0;
+    margin-top: auto;
+}
+
+.sidebar-footer small {
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+
+/* Responsive Design */
+@media (max-width: 767.98px) {
+    .modern-sidebar {
+        width: 280px !important;
+    }
+    
+    .modern-sidebar-header {
+        padding: 1rem 0.875rem;
+    }
+    
+    .sidebar-logo {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .sidebar-logo i {
+        font-size: 1.1rem;
+    }
+    
+    .brand-title {
+        font-size: 1rem;
+    }
+    
+    .brand-desc {
+        font-size: 0.65rem;
+    }
+    
+    .modern-sidebar-body {
+        padding: 1rem 0.75rem;
+        gap: 1rem;
+    }
+    
+    .user-profile-section {
+        padding: 0.875rem;
+        gap: 0.5rem;
+    }
+    
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border: 2px solid white;
+    }
+    
+    .user-status {
+        width: 12px;
+        height: 12px;
+        bottom: 2px;
+        right: 2px;
+    }
+    
+    .user-name {
+        font-size: 0.9rem;
+    }
+    
+    .user-greeting {
+        font-size: 0.75rem;
+    }
+    
+    .modern-nav-link {
+        padding: 0.75rem 0.75rem;
+        font-size: 0.875rem;
+        gap: 0.75rem;
+    }
+    
+    .nav-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .nav-icon i {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modern-sidebar {
+        width: 260px !important;
+    }
+    
+    .modern-sidebar-header {
+        padding: 0.875rem 0.75rem;
+    }
+    
+    .sidebar-logo {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .sidebar-logo i {
+        font-size: 1rem;
+    }
+    
+    .brand-title {
+        font-size: 0.95rem;
+    }
+    
+    .brand-desc {
+        font-size: 0.6rem;
+    }
+    
+    .modern-sidebar-body {
+        padding: 0.875rem 0.625rem;
+    }
+    
+    .user-profile-section {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .user-avatar {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .user-status {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .user-name {
+        font-size: 0.85rem;
+    }
+    
+    .user-greeting {
+        font-size: 0.7rem;
+    }
+    
+    .modern-nav-link {
+        padding: 0.625rem 0.625rem;
+        font-size: 0.85rem;
+    }
+    
+    .nav-icon {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .nav-icon i {
+        font-size: 0.9rem;
+    }
+    
+    .sidebar-footer {
+        padding: 0.75rem 0 0.5rem;
+    }
+    
+    .sidebar-footer small {
+        font-size: 0.7rem;
+    }
+}
+
+/* Animation for opening */
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.modern-sidebar.show {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+/* Backdrop enhancement */
+.offcanvas-backdrop {
+    z-index: 1050 !important; /* Between navbar and sidebar */
+}
+
+.offcanvas-backdrop.show {
+    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Smooth scrolling */
+.modern-sidebar-body {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(74, 144, 226, 0.3) transparent;
+}
+
+.modern-sidebar-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modern-sidebar-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modern-sidebar-body::-webkit-scrollbar-thumb {
+    background: rgba(74, 144, 226, 0.3);
+    border-radius: 3px;
+}
+
+.modern-sidebar-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 144, 226, 0.5);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set active link based on current page
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.modern-nav-link');
+    
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (currentPath.includes(href) && href !== '/') {
+            link.classList.add('active');
+        } else if (currentPath === '/' && href === '/') {
+            link.classList.add('active');
+        }
+    });
+    
+    // Close sidebar on link click (mobile)
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const sidebar = document.getElementById('offcanvasNavbar');
+            const bsOffcanvas = bootstrap.Offcanvas.getInstance(sidebar);
+            if (bsOffcanvas && window.innerWidth < 992) {
+                bsOffcanvas.hide();
+            }
+        });
+    });
+});
+</script>
