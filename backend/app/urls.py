@@ -49,6 +49,11 @@ class SidebarPartialView(StaticPartialView):
 class FooterPartialView(StaticPartialView):
     html_file = 'footer.html'
 
+# Config.js view
+class ConfigJsView(StaticHTMLView):
+    html_file = 'config.js'
+    content_type = 'application/javascript'
+
 # Constant views  
 class ErrorConstantView(StaticConstantView):
     html_file = 'error.html'
@@ -85,6 +90,8 @@ static_html_patterns = [
     path("credibility.html", CredibilityStaticView.as_view(), name="credibility"),
     path("complaints.html", ComplaintsStaticView.as_view(), name="complaints"),
     path("hey.html", HeyStaticView.as_view(), name="hey"),
+    # Config.js
+    path("config.js", ConfigJsView.as_view(), name="config_js"),
     # Partials
     path("static/partials/navbar.html", NavbarPartialView.as_view(), name="partial_navbar"),
     path("static/partials/sidebar.html", SidebarPartialView.as_view(), name="partial_sidebar"),
@@ -103,6 +110,6 @@ urlpatterns = (
 )
 
 # Serve static files during development
-if settings.DEBUG:
+if settings.DEBUG or True:  # Always serve static files in local development
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
     urlpatterns += staticfiles_urlpatterns()

@@ -27,7 +27,10 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "cb480bd8-7abf-4e5c-ae8e-1bf07b298900"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,case-detector.onrender.com,.onrender.com").split(",")
+# Detect if running in production (Render/Vercel) or local development
+IS_PRODUCTION = os.environ.get("RENDER", None) is not None or os.environ.get("VERCEL", None) is not None
+
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,case-detector-vig7.onrender.com,.onrender.com").split(",")
 
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
@@ -50,6 +53,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -77,16 +81,17 @@ CORS_ALLOW_HEADERS = [
 # CSRF Settings for cross-origin
 CSRF_TRUSTED_ORIGINS = [
     'https://case-detector.vercel.app',
-    'https://case-detector.onrender.com',
+    'https://case-detector-vig7.onrender.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
 
 # Session settings for cross-origin
-SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_SECURE = True  # Required for SameSite=None
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SECURE = True  # Required for SameSite=None
+# Use secure cookies only in production (HTTPS), allow HTTP for local development
+SESSION_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
+SESSION_COOKIE_SECURE = IS_PRODUCTION  # True only on Render/Vercel
+CSRF_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
+CSRF_COOKIE_SECURE = IS_PRODUCTION  # True only on Render/Vercel
 
 ROOT_URLCONF = 'app.urls'
 

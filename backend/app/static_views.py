@@ -13,6 +13,7 @@ class StaticHTMLView(View):
     """
     html_file = None
     subdirectory = ''  # For partials, constants, etc.
+    content_type = 'text/html'  # Default content type
     
     def get(self, request):
         if not self.html_file:
@@ -27,7 +28,7 @@ class StaticHTMLView(View):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 html_content = f.read()
-            return HttpResponse(html_content, content_type='text/html')
+            return HttpResponse(html_content, content_type=self.content_type)
         except FileNotFoundError:
             return HttpResponse(f"File not found: {self.html_file}", status=404)
         except Exception as e:
