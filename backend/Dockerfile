@@ -30,5 +30,8 @@ RUN python manage.py collectstatic --noinput || true
 
 EXPOSE 8000
 
-CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "1"]
+# Auto-run migrations and create default user on startup
+CMD python manage.py migrate --noinput && \
+    python manage.py createdefaultuser && \
+    gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 1
     

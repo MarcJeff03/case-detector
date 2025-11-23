@@ -67,15 +67,47 @@ SECRET_KEY=your-secret-key-here
 DEBUG=False
 ALLOWED_HOSTS=case-detector.onrender.com,.onrender.com
 CORS_ALLOWED_ORIGINS=https://case-detector.vercel.app
+
+# Database - PostgreSQL (Required for persistent data)
+DATABASE_URL=your-postgresql-connection-string
+
+# Admin user credentials (auto-created on first deploy)
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your-secure-password
 ```
+
+**How to get DATABASE_URL:**
+1. In Render dashboard, click **New +** → **PostgreSQL**
+2. Name it (e.g., `case-detector-db`)
+3. Select **Free** tier
+4. Click **Create Database**
+5. Copy the **Internal Database URL**
+6. Paste it as `DATABASE_URL` in your Web Service environment variables
 
 ### 4. Database Migration
 
-After deployment, run in Render shell:
-```bash
-python manage.py migrate
-python manage.py createsuperuser
-```
+**✅ Migrations run automatically on every deployment!**
+
+The Dockerfile is already configured to:
+1. Run database migrations: `python manage.py migrate --noinput`
+2. Create default admin user: `python manage.py createdefaultuser`
+3. Start the server: `gunicorn app.wsgi:application`
+
+**✅ PostgreSQL is Now Configured!**
+
+The project is set up to use PostgreSQL automatically when you provide the `DATABASE_URL` environment variable. Your data will persist across restarts!
+
+**What You Get:**
+- ✅ **Persistent data** - Users, papers, complaints survive restarts
+- ✅ **Production-ready** - Better performance and reliability
+- ✅ **Free tier** - Render's PostgreSQL free tier is sufficient for testing
+- ✅ **Automatic fallback** - Uses SQLite for local development if no DATABASE_URL
+
+**Access Admin Panel:**
+- URL: `https://case-detector.onrender.com/admin/`
+- Username: `admin` (or your ADMIN_USERNAME)
+- Password: Your ADMIN_PASSWORD
 
 ### 5. Why Use Docker? 🐳
 
