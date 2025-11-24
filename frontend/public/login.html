@@ -630,9 +630,19 @@ function getCookie(name) {
 // Function to get CSRF token from Django
 async function getCSRFToken() {
     try {
-        const response = await fetch(`${API_BASE_URL}/login/`, {
+        // First try to get CSRF token from cookie
+        const token = getCookie('csrftoken');
+        if (token) {
+            return token;
+        }
+        
+        // If not in cookie, fetch login.html to trigger Django to set it
+        const response = await fetch(`${API_BASE_URL}/login.html`, {
             credentials: 'include'
         });
+        
+        // Wait a bit for cookie to be set
+        await new Promise(resolve => setTimeout(resolve, 100));
         return getCookie('csrftoken');
     } catch (error) {
         console.error('Error getting CSRF token:', error);
