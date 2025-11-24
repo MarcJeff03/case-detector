@@ -75,8 +75,17 @@ api_patterns = [
 predefined_patterns = [path("api/analyze-paper/<str:id>/", AnalyzePaper.as_view()),
                        path("api/transcribe-audio/", Transcribe.as_view(), name = "transcribe-audio")]
 
+# CSRF token endpoint
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({'detail': 'CSRF cookie set'})
+
 # Authentication patterns
 auth_patterns = [
+    path("csrf/", get_csrf_token, name="csrf"),
     path("authenticate_user/", MainView.authenticate_user, name="authenticate_user"),
     path("logout/", MainView.user_logout, name="logout"),
 ]

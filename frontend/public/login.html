@@ -636,8 +636,8 @@ async function getCSRFToken() {
             return token;
         }
         
-        // If not in cookie, fetch login.html to trigger Django to set it
-        const response = await fetch(`${API_BASE_URL}/login.html`, {
+        // Fetch CSRF endpoint to get Django to set the cookie
+        const response = await fetch(`${API_BASE_URL}/csrf/`, {
             credentials: 'include'
         });
         
