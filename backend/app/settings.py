@@ -168,10 +168,15 @@ STATIC_URL = '/static/'
 STATIC_ROOT = posixpath.join(*(BASE_DIR.split(os.path.sep) + ['static']))
 
 # Additional locations of static files for development
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, '..', 'frontend', 'static'),   # Static assets (CSS, JS, images)
-    os.path.join(BASE_DIR, '..', 'frontend', 'public'),   # Static HTML files
-]
+# Only include frontend directories if they exist (local development)
+STATICFILES_DIRS = []
+if not IS_PRODUCTION:
+    frontend_static = os.path.join(BASE_DIR, '..', 'frontend', 'static')
+    frontend_public = os.path.join(BASE_DIR, '..', 'frontend', 'public')
+    if os.path.exists(frontend_static):
+        STATICFILES_DIRS.append(frontend_static)
+    if os.path.exists(frontend_public):
+        STATICFILES_DIRS.append(frontend_public)
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
