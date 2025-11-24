@@ -85,12 +85,17 @@ def get_csrf_token(request):
     response['Access-Control-Allow-Credentials'] = 'true'
     return response
 
+# Health check endpoint for Render
+def health_check(request):
+    return JsonResponse({'status': 'healthy'})
+
 # Root redirect
 from django.views.generic import RedirectView
 
 # Authentication patterns
 auth_patterns = [
     path("", RedirectView.as_view(url='/login.html', permanent=False), name="root"),
+    path("health/", health_check, name="health"),
     path("csrf/", get_csrf_token, name="csrf"),
     path("authenticate_user/", MainView.authenticate_user, name="authenticate_user"),
     path("logout/", MainView.user_logout, name="logout"),

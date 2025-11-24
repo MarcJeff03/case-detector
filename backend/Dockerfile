@@ -34,8 +34,8 @@ RUN python manage.py collectstatic --noinput || true
 EXPOSE 8000
 
 # Auto-run migrations and create default user on startup
-# Using --preload to load app once, and --timeout 120 for slow startup
+# Increased timeout for ML model loading, removed --preload for faster health check response
 CMD python manage.py migrate --noinput && \
     python manage.py createdefaultuser && \
-    gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 2 --timeout 120 --preload --max-requests 1000 --max-requests-jitter 50
+    gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 2 --timeout 300 --max-requests 1000 --max-requests-jitter 50
     
