@@ -80,7 +80,10 @@ predefined_patterns = [path("api/analyze-paper/<str:id>/", AnalyzePaper.as_view(
 # CSRF token endpoint
 @ensure_csrf_cookie
 def get_csrf_token(request):
-    return JsonResponse({'detail': 'CSRF cookie set'})
+    response = JsonResponse({'detail': 'CSRF cookie set'})
+    response['Access-Control-Allow-Origin'] = 'https://case-detector.vercel.app'
+    response['Access-Control-Allow-Credentials'] = 'true'
+    return response
 
 # Root redirect
 from django.views.generic import RedirectView
