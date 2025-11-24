@@ -30,7 +30,7 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 # Detect if running in production (Render/Vercel) or local development
 IS_PRODUCTION = os.environ.get("RENDER", None) is not None or os.environ.get("VERCEL", None) is not None
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,case-detector-vig7.onrender.com,.onrender.com").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,case-detector-rl21.onrender.com,.onrender.com").split(",")
 
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
@@ -81,7 +81,7 @@ CORS_ALLOW_HEADERS = [
 # CSRF Settings for cross-origin
 CSRF_TRUSTED_ORIGINS = [
     'https://case-detector.vercel.app',
-    'https://case-detector-vig7.onrender.com',
+    'https://case-detector-rl21.onrender.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
