@@ -82,8 +82,12 @@ predefined_patterns = [path("api/analyze-paper/<str:id>/", AnalyzePaper.as_view(
 def get_csrf_token(request):
     return JsonResponse({'detail': 'CSRF cookie set'})
 
+# Root redirect
+from django.views.generic import RedirectView
+
 # Authentication patterns
 auth_patterns = [
+    path("", RedirectView.as_view(url='/login.html', permanent=False), name="root"),
     path("csrf/", get_csrf_token, name="csrf"),
     path("authenticate_user/", MainView.authenticate_user, name="authenticate_user"),
     path("logout/", MainView.user_logout, name="logout"),
