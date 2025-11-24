@@ -2,9 +2,11 @@
 Definition of urls for app.
 """
 
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.contrib import admin
 from django.views.generic import TemplateView as DjangoTemplateView
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
 from app.views import TemplateView
 from app.static_views import StaticHTMLView, StaticPartialView, StaticConstantView
 from .api import *
@@ -76,9 +78,6 @@ predefined_patterns = [path("api/analyze-paper/<str:id>/", AnalyzePaper.as_view(
                        path("api/transcribe-audio/", Transcribe.as_view(), name = "transcribe-audio")]
 
 # CSRF token endpoint
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.http import JsonResponse
-
 @ensure_csrf_cookie
 def get_csrf_token(request):
     return JsonResponse({'detail': 'CSRF cookie set'})
