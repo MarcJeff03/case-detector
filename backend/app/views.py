@@ -1,5 +1,7 @@
 from django.shortcuts import redirect
-from django.http import HttpRequest
+from django.http import HttpRequest, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 import app.constants.template_constants as Templates
 from django.contrib.auth import logout, authenticate, login
 
@@ -68,21 +70,35 @@ class TemplateView:
 
         return redirect("home") #Change the home to your index page.
 
+    @csrf_exempt
     def authenticate_user(self, request):
         try:
             if request.method == "POST":
-
                 username = request.POST.get("username")
                 password = request.POST.get("password")
                 user = authenticate(request, username=username, password=password)
                 if user is not None:
                     login(request, user)  # Library level not instance.
-                    return redirect("home")  # Redirect to static HTML home page
-
+                    # Return JSON response for cross-origin requests
+                    return JsonResponse({
+                        'success': True,
+                        'redirect': '/home.html'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Invalid credentials'
+                    }, status=401)
         except Exception as e:
-            pass
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
 
-        return redirect("login")  # Redirect to static HTML login page
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid request method'
+        }, status=400)
 
     def user_logout(self, request):
         from django.contrib.auth import logout
