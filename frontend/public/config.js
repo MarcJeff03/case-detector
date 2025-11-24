@@ -10,7 +10,7 @@ const API_CONFIG = (function() {
     // Production: Vercel frontend connecting to Render backend
     if (hostname === 'case-detector.vercel.app') {
         return {
-            API_BASE_URL: 'https://case-detector-rl21.onrender.com',
+            API_BASE_URL: 'https://case-detector-2ne7.onrender.com',
             environment: 'production'
         };
     }
