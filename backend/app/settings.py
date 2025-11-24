@@ -86,6 +86,10 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
 ]
 
+# Additional CSRF settings for cross-origin requests
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF cookie
+CSRF_USE_SESSIONS = False  # Store CSRF token in cookie, not session
+
 # Session settings for cross-origin
 # Use secure cookies only in production (HTTPS), allow HTTP for local development
 SESSION_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
