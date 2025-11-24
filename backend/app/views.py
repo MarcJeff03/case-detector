@@ -80,25 +80,38 @@ class TemplateView:
                 if user is not None:
                     login(request, user)  # Library level not instance.
                     # Return JSON response for cross-origin requests
-                    return JsonResponse({
+                    response = JsonResponse({
                         'success': True,
                         'redirect': '/home.html'
                     })
+                    # Add explicit CORS headers
+                    response['Access-Control-Allow-Origin'] = 'https://case-detector.vercel.app'
+                    response['Access-Control-Allow-Credentials'] = 'true'
+                    return response
                 else:
-                    return JsonResponse({
+                    response = JsonResponse({
                         'success': False,
                         'error': 'Invalid credentials'
                     }, status=401)
+                    response['Access-Control-Allow-Origin'] = 'https://case-detector.vercel.app'
+                    response['Access-Control-Allow-Credentials'] = 'true'
+                    return response
         except Exception as e:
-            return JsonResponse({
+            response = JsonResponse({
                 'success': False,
                 'error': str(e)
             }, status=500)
+            response['Access-Control-Allow-Origin'] = 'https://case-detector.vercel.app'
+            response['Access-Control-Allow-Credentials'] = 'true'
+            return response
 
-        return JsonResponse({
+        response = JsonResponse({
             'success': False,
             'error': 'Invalid request method'
         }, status=400)
+        response['Access-Control-Allow-Origin'] = 'https://case-detector.vercel.app'
+        response['Access-Control-Allow-Credentials'] = 'true'
+        return response
 
     def user_logout(self, request):
         from django.contrib.auth import logout

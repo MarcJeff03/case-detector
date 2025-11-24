@@ -30,6 +30,16 @@
     <!-- Axios -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     
+    <!-- Config -->
+    <script src="/config.js"></script>
+    <script>
+        // Configure axios to use the backend API URL
+        if (typeof API_CONFIG !== 'undefined' && API_CONFIG.API_BASE_URL) {
+            axios.defaults.baseURL = API_CONFIG.API_BASE_URL;
+            axios.defaults.withCredentials = true;
+        }
+    </script>
+    
     <!-- DataTables JS -->
     <script src="/static/app/datatables/datatables.min.js"></script>
     

@@ -17,7 +17,11 @@
     <script src="/static/app/datatables/datatables.min.js"></script>
     <script src="/config.js"></script>
     <script>
-        // API_BASE_URL is now loaded from config.js
+        // Configure axios to use the backend API URL
+        if (typeof API_CONFIG !== 'undefined' && API_CONFIG.API_BASE_URL) {
+            axios.defaults.baseURL = API_CONFIG.API_BASE_URL;
+            axios.defaults.withCredentials = true;
+        }
     </script>
 </head>
 <body style="padding-top: 56px;">

@@ -30,6 +30,16 @@
     <!-- Axios -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     
+    <!-- Config -->
+    <script src="/config.js"></script>
+    <script>
+        // Configure axios to use the backend API URL
+        if (typeof API_CONFIG !== 'undefined' && API_CONFIG.API_BASE_URL) {
+            axios.defaults.baseURL = API_CONFIG.API_BASE_URL;
+            axios.defaults.withCredentials = true;
+        }
+    </script>
+    
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -1543,8 +1553,13 @@
 
     <!-- Load navbar and sidebar components -->
     <script>
+        // Get base URL for static files (use backend URL for cross-origin)
+        const baseURL = (typeof API_CONFIG !== 'undefined' && API_CONFIG.API_BASE_URL) 
+            ? API_CONFIG.API_BASE_URL 
+            : window.location.origin;
+        
         // Load navbar
-        fetch('/static/partials/navbar.html')
+        fetch(`${baseURL}/static/partials/navbar.html`)
             .then(response => response.text())
             .then(html => {
                 document.getElementById('navbar-container').innerHTML = html;
@@ -1552,7 +1567,7 @@
             .catch(error => console.error('Error loading navbar:', error));
 
         // Load sidebar
-        fetch('/static/partials/sidebar.html')
+        fetch(`${baseURL}/static/partials/sidebar.html`)
             .then(response => response.text())
             .then(html => {
                 document.getElementById('sidebar-container').innerHTML = html;
