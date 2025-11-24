@@ -1559,7 +1559,7 @@
             : window.location.origin;
         
         // Load navbar
-        fetch(`${baseURL}/static/partials/navbar.html`)
+        fetch(`${baseURL}/partials/navbar.html`)
             .then(response => response.text())
             .then(html => {
                 document.getElementById('navbar-container').innerHTML = html;
@@ -1567,7 +1567,7 @@
             .catch(error => console.error('Error loading navbar:', error));
 
         // Load sidebar
-        fetch(`${baseURL}/static/partials/sidebar.html`)
+        fetch(`${baseURL}/partials/sidebar.html`)
             .then(response => response.text())
             .then(html => {
                 document.getElementById('sidebar-container').innerHTML = html;

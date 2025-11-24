@@ -105,9 +105,9 @@ static_html_patterns = [
     # Config.js
     path("config.js", ConfigJsView.as_view(), name="config_js"),
     # Partials
-    path("static/partials/navbar.html", NavbarPartialView.as_view(), name="partial_navbar"),
-    path("static/partials/sidebar.html", SidebarPartialView.as_view(), name="partial_sidebar"),
-    path("static/partials/footer.html", FooterPartialView.as_view(), name="partial_footer"),
+    path("partials/navbar.html", NavbarPartialView.as_view(), name="partial_navbar"),
+    path("partials/sidebar.html", SidebarPartialView.as_view(), name="partial_sidebar"),
+    path("partials/footer.html", FooterPartialView.as_view(), name="partial_footer"),
     # Constants
     path("static/constants/error.html", ErrorConstantView.as_view(), name="constant_error"),
     path("static/constants/expired.html", ExpiredConstantView.as_view(), name="constant_expired"),
